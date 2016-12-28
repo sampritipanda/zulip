@@ -775,6 +775,7 @@ JS_SPECS = {
             'js/dict.js',
             'js/components.js',
             'js/localstorage.js',
+            'js/drafts.js',
             'js/channel.js',
             'js/setup.js',
             'js/unread_ui.js',
