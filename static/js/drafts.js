@@ -13,37 +13,27 @@ var drafts = (function () {
         addDraft: function (drafts, stream, topic, draft) {
             var id = fn.createKey();
 
-            if (!drafts.streams[stream]) {
-                drafts.streams[stream] = {};
-            }
-
-            if (!drafts.streams[stream][topic]) {
-                drafts.streams[stream][topic] = {};
-            }
-
-            drafts.streams[stream][topic][id] = draft;
+            drafts[id] = {
+                stream: stream,
+                topic: topic,
+                draft: draft
+            };
 
             return id;
         },
 
-        editDraft: function (drafts, stream, topic, id, draft) {
-            if (drafts.streams[stream] && drafts.streams[stream][topic]) {
-                drafts.streams[stream][topic][id] = draft;
+        editDraft: function (id, draft) {
+            if (drafts[id]) {
+                drafts[id].draft = draft;
             }
         },
 
-        deleteDraft: function (drafts, stream, topic, id) {
-            if (drafts.streams[stream] && drafts.streams[stream][topic]) {
-                delete drafts.streams[stream][topic][id];
-            }
+        deleteDraft: function (id) {
+            delete drafts[id];
         },
 
-        getDraft: function (drafts, stream, topic, id) {
-            if (drafts.streams[stream] && drafts.streams[stream][topic]) {
-                return drafts.streams[stream][topic][id];
-            }
-
-            return false;
+        getDraft: function (id) {
+            return drafts[id] || false;
         },
 
         createEmptyDrafts: function () {
