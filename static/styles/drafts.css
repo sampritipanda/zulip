@@ -16,11 +16,13 @@
 }
 
 .drafts-header {
-    padding: 12px;
+    padding: 20px;
     margin-bottom: 10px;
     text-align: center;
     text-transform: uppercase;
-    font-weight: 800;
+    font-weight: 700;
+    font-size: 1.25em;
+    border-bottom: 1px solid #ddd;
 }
 
 .drafts-container .exit {
@@ -45,6 +47,16 @@
     overflow: auto;
     height: calc(100% - 45px);
     width: 100%;
+}
+
+.drafts-list .no-drafts {
+    display: block;
+    margin-top: calc(45vh - 30px - 1.5em);
+    text-align: center;
+    font-size: 1.5em;
+    color: #aaa;
+    pointer-events: none;
+    -webkit-font-smoothing: antialiased;
 }
 
 .draft-row {

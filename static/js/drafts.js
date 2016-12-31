@@ -199,6 +199,10 @@ exports.setup_page = function (callback) {
 
           exports.draft_model.deleteDraft(draft_id);
           draft_row.remove();
+
+          if ($("#drafts_table .draft-row").length == 0) {
+              $('#drafts_table .no-drafts').show();
+          }
         });
     }
 
@@ -242,6 +246,9 @@ exports.setup_page = function (callback) {
         var drafts = format_drafts(draft_model.get());
         var rendered = templates.render('draft_table_body', { drafts: drafts });
         $('#drafts_table').append(rendered);
+        if ($("#drafts_table .draft-row").length > 0) {
+          $('#drafts_table .no-drafts').hide();
+        }
 
         if (callback) {
             callback();
