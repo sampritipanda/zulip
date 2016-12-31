@@ -222,8 +222,7 @@ function hashchanged(from_reload, e) {
         if (!should_ignore(old_hash || "#")) {
             if (base === "subscriptions") {
                 subs.launch();
-            }
-            else if (base == "drafts") {
+            } else if (base === "drafts") {
                 drafts.launch();
             }
 

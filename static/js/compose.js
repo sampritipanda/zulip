@@ -126,7 +126,7 @@ function clear_box() {
     clear_all_everyone_warnings();
     user_acknowledged_all_everyone = undefined;
     $("#compose").find('input[type=text], textarea').val('');
-    $("#new_message_content").removeData("draft-id")
+    $("#new_message_content").removeData("draft-id");
     autosize_textarea();
     $("#send-status").hide(0);
 }
@@ -355,10 +355,9 @@ exports.snapshot_message = function (message) {
 
     if (message !== undefined) {
         return _.extend({}, message);
-    } else {
-        // Save what we can.
-        return create_message_object();
     }
+    // Save what we can.
+    return create_message_object();
 };
 
 function compose_error(error_text, bad_input) {

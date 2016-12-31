@@ -89,7 +89,8 @@
         "home_msg_list": false,
         "pm_list": false,
         "unread_ui": false,
-        "Plotly": false
+        "Plotly": false,
+        "drafts": false
     },
     "rules": {
         "no-restricted-syntax": 1,
