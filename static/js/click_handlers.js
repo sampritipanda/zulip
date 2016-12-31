@@ -328,7 +328,7 @@ $(function () {
     );
 
 
-    $('.drafts_button').click(function() {
+    $('.drafts_button').click(function () {
         window.location.href = '/#drafts';
     });
     $('.compose_stream_button').click(function () {

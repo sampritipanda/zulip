@@ -1,21 +1,21 @@
 <div id="draft_overlay" class="new-style">
-    <div class="flex">
-        <div class="drafts-container">
-            <div class="drafts-header">
-                Drafts
-                <div class="exit">
-                    <span class="exit-sign">&times;</span>
-                </div>
-            </div>
-            <div class="drafts-list">
-                <div class="no-drafts">
-                  No Drafts.
-                </div>
+  <div class="flex">
+    <div class="drafts-container">
+      <div class="drafts-header">
+        Drafts
+        <div class="exit">
+          <span class="exit-sign">&times;</span>
+        </div>
+      </div>
+      <div class="drafts-list">
+        <div class="no-drafts">
+          No Drafts.
+        </div>
 
-                {{#each drafts}}
-                    {{partial "draft" "draft_id" @key}}
-                {{/each}}
-            </div>
+        {{#each drafts}}
+          {{partial "draft"}}
+        {{/each}}
       </div>
     </div>
+  </div>
 </div>
