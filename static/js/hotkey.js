@@ -198,6 +198,9 @@ function process_hotkey(e) {
         } else if ($("#subscription_overlay").css("display") === "block") {
             $("#subscription_overlay").click();
             return true;
+        } else if ($("#draft_overlay").css("display") === "block") {
+            $("#draft_overlay").click();
+            return true;
         }
     }
 
