@@ -8,6 +8,10 @@
                 </div>
             </div>
             <div class="drafts-list">
+                <div class="no-drafts">
+                  No Drafts.
+                </div>
+
                 {{#each drafts}}
                     {{partial "draft" "draft_id" @key}}
                 {{/each}}
