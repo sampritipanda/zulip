@@ -253,6 +253,20 @@ $(function () {
             hashchange.exit_settings();
         }
     });
+
+    $("#drafts_table").on("click", ".exit, #draft_overlay", function (e) {
+        if (meta.focusing) {
+            meta.focusing = false;
+            return;
+        }
+
+        if ($(e.target).is(".exit, .exit-sign, #draft_overlay, #draft_overlay > .flex")) {
+            $("#draft_overlay").fadeOut(500);
+
+            hashchange.exit_settings();
+        }
+    });
+
     // HOME
 
     // Capture both the left-sidebar Home click and the tab breadcrumb Home
@@ -306,6 +320,9 @@ $(function () {
     );
 
 
+    $('.drafts_button').click(function() {
+        window.location.href = '/#drafts';
+    });
     $('.compose_stream_button').click(function () {
         compose.start('stream');
     });

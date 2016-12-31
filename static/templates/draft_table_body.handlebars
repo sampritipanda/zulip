@@ -1,0 +1,17 @@
+<div id="draft_overlay" class="new-style">
+    <div class="flex">
+        <div class="drafts-container">
+            <div class="drafts-header">
+                Drafts
+                <div class="exit">
+                    <span class="exit-sign">&times;</span>
+                </div>
+            </div>
+            <div class="drafts-list">
+                {{#each drafts}}
+                    {{partial "draft" "draft_id" @key}}
+                {{/each}}
+            </div>
+      </div>
+    </div>
+</div>

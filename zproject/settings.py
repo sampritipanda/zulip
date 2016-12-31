@@ -678,6 +678,7 @@ PIPELINE = {
                 'styles/zulip.css',
                 'styles/settings.css',
                 'styles/subscriptions.css',
+                'styles/drafts.css',
                 'styles/compose.css',
                 'styles/reactions.css',
                 'styles/left-sidebar.css',
@@ -698,6 +699,7 @@ PIPELINE = {
                 'styles/zulip.css',
                 'styles/settings.css',
                 'styles/subscriptions.css',
+                'styles/drafts.css',
                 'styles/compose.css',
                 'styles/reactions.css',
                 'styles/left-sidebar.css',
@@ -842,6 +844,7 @@ JS_SPECS = {
             'js/custom_markdown.js',
             'js/bot_data.js',
             'js/reactions.js',
+            'js/drafts.js',
             # JS bundled by webpack is also included here if PIPELINE_ENABLED setting is true
         ],
         'output_filename': 'min/app.js'
