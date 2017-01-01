@@ -45,7 +45,7 @@
 
 .drafts-list {
     overflow: auto;
-    height: calc(100% - 45px);
+    height: calc(100% - 90px);
     width: 100%;
 }
 
