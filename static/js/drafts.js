@@ -146,26 +146,12 @@ exports.restore_draft = function (draft_id) {
                               draft_copy);
     }
 
-    $("#draft_overlay").fadeOut(500, function () {
+    $("#draft_overlay").fadeOut(200, function () {
         hashchange.exit_settings();
 
         compose_fade.clear_compose();
-        if (draft.type === "stream") {
-            if (draft.stream === "") {
-                draft_copy.subject = "";
-                narrow.activate([]);
-            } else {
-                narrow.activate([{operator: "stream", operand: draft.stream}, {operator: "topic", operand: draft.subject}],
-                                {select_first_unread: true, trigger: "restore draft"});
-            }
-        } else {
-            if (draft.private_message_recipient === "") {
-                narrow.activate([{operator: "is", operand: "private"}],
-                                {select_first_unread: true, trigger: "restore draft"});
-            } else {
-                narrow.activate([{operator: "pm-with", operand: draft.private_message_recipient}],
-                                {select_first_unread: true, trigger: "restore draft"});
-            }
+        if (draft.type === "stream" && draft.stream === "") {
+            draft_copy.subject = "";
         }
         compose.start(draft_copy.type, draft_copy);
         $("#new_message_content").data("draft-id", draft_id);
@@ -225,6 +211,7 @@ exports.setup_page = function (callback) {
                 }).join(', ');
 
                 formatted = {
+                    draft_id: id,
                     is_stream: false,
                     recipients: recipients,
                     content: echo.apply_markdown(draft.content)
