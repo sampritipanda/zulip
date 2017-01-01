@@ -323,6 +323,11 @@ $(function () {
     $('.drafts_button').click(function () {
         window.location.href = '/#drafts';
     });
+    $('#compose #restore-draft').click(function() {
+        drafts.restore_draft($(this).data("draft-id"));
+        $(this).removeData("draft-id");
+        $(this).hide();
+    });
     $('.compose_stream_button').click(function () {
         compose.start('stream');
     });

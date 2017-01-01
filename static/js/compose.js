@@ -277,6 +277,8 @@ exports.start = function (msg_type, opts) {
 
     compose_fade.start_compose(msg_type);
 
+    drafts.show_restore_draft_for_compose(msg_type);
+
     exports.decorate_stream_bar(opts.stream);
     $(document).trigger($.Event('compose_started.zulip', opts));
     resize.resize_bottom_whitespace();

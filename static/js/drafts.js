@@ -130,6 +130,23 @@ exports.delete_draft_after_send = function () {
     $("#new_message_content").removeData("draft-id");
 };
 
+exports.show_restore_draft_for_compose = function (msg_type) {
+    // Reset state
+    $("#compose #restore-draft").hide();
+
+    var draft_ids = _.keys(draft_model.get());
+    var filtered = draft_ids.filter(function (id) {
+        return draft_model.getDraft(id).type == msg_type;
+    });
+    if (filtered.length > 0) {
+        var draft_id = _.max(filtered, function (id) {
+          return draft_model.getDraft(id).updatedAt;
+        });
+        $("#compose #restore-draft").show();
+        $("#compose #restore-draft").data("draft-id", draft_id);
+    }
+};
+
 exports.restore_draft = function (draft_id) {
     var draft = draft_model.getDraft(draft_id);
     if (!draft) {
@@ -146,26 +163,12 @@ exports.restore_draft = function (draft_id) {
                               draft_copy);
     }
 
-    $("#draft_overlay").fadeOut(500, function () {
+    $("#draft_overlay").fadeOut(200, function () {
         hashchange.exit_settings();
 
         compose_fade.clear_compose();
-        if (draft.type === "stream") {
-            if (draft.stream === "") {
-                draft_copy.subject = "";
-                narrow.activate([]);
-            } else {
-                narrow.activate([{operator: "stream", operand: draft.stream}, {operator: "topic", operand: draft.subject}],
-                                {select_first_unread: true, trigger: "restore draft"});
-            }
-        } else {
-            if (draft.private_message_recipient === "") {
-                narrow.activate([{operator: "is", operand: "private"}],
-                                {select_first_unread: true, trigger: "restore draft"});
-            } else {
-                narrow.activate([{operator: "pm-with", operand: draft.private_message_recipient}],
-                                {select_first_unread: true, trigger: "restore draft"});
-            }
+        if (draft.type === "stream" && draft.stream === "") {
+            draft_copy.subject = "";
         }
         compose.start(draft_copy.type, draft_copy);
         $("#new_message_content").data("draft-id", draft_id);
@@ -225,6 +228,7 @@ exports.setup_page = function (callback) {
                 }).join(', ');
 
                 formatted = {
+                    draft_id: id,
                     is_stream: false,
                     recipients: recipients,
                     content: echo.apply_markdown(draft.content)
