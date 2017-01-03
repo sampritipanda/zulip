@@ -13,6 +13,7 @@ add_dependencies({
     muting: 'js/muting.js',
     people: 'js/people.js',
     unread: 'js/unread.js',
+    util:   'js/util.js',
 });
 
 var stream_data = require('js/stream_data.js');
