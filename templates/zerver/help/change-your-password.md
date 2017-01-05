@@ -2,8 +2,8 @@
 
 ## If you know your current password
 
-1. Go to the [Your Account](/#settings/your-account) tab of the
-   [Settings](/help/edit-settings) page.
+{!go-to-the.md!} [Your Account](/#settings/your-account)
+{!settings.md!}
 2. Click the **Change Password** button located underneath your name.
 3. You will be asked first to enter your old password, and then to
    enter a new password and to confirm it.

@@ -468,23 +468,23 @@ class AdminCreateUserTest(ZulipTestCase):
         admin = get_user_profile_by_email(admin_email)
         do_change_is_admin(admin, True)
 
-        result = self.client_put("/json/users", dict())
+        result = self.client_post("/json/users", dict())
         self.assert_json_error(result, "Missing 'email' argument")
 
-        result = self.client_put("/json/users", dict(
+        result = self.client_post("/json/users", dict(
             email='romeo@not-zulip.com',
             )
         )
         self.assert_json_error(result, "Missing 'password' argument")
 
-        result = self.client_put("/json/users", dict(
+        result = self.client_post("/json/users", dict(
             email='romeo@not-zulip.com',
             password='xxxx',
             )
         )
         self.assert_json_error(result, "Missing 'full_name' argument")
 
-        result = self.client_put("/json/users", dict(
+        result = self.client_post("/json/users", dict(
             email='romeo@not-zulip.com',
             password='xxxx',
             full_name='Romeo Montague',
@@ -492,7 +492,7 @@ class AdminCreateUserTest(ZulipTestCase):
         )
         self.assert_json_error(result, "Missing 'short_name' argument")
 
-        result = self.client_put("/json/users", dict(
+        result = self.client_post("/json/users", dict(
             email='broken',
             password='xxxx',
             full_name='Romeo Montague',
@@ -501,7 +501,7 @@ class AdminCreateUserTest(ZulipTestCase):
         )
         self.assert_json_error(result, "Bad name or username")
 
-        result = self.client_put("/json/users", dict(
+        result = self.client_post("/json/users", dict(
             email='romeo@not-zulip.com',
             password='xxxx',
             full_name='Romeo Montague',
@@ -520,7 +520,7 @@ class AdminCreateUserTest(ZulipTestCase):
             full_name='Romeo Montague',
             short_name='Romeo',
         )
-        result = self.client_put("/json/users", valid_params)
+        result = self.client_post("/json/users", valid_params)
         self.assert_json_success(result)
 
         new_user = get_user_profile_by_email('romeo@zulip.net')
@@ -529,7 +529,7 @@ class AdminCreateUserTest(ZulipTestCase):
 
         # One more error condition to test--we can't create
         # the same user twice.
-        result = self.client_put("/json/users", valid_params)
+        result = self.client_post("/json/users", valid_params)
         self.assert_json_error(result,
                                "Email 'romeo@zulip.net' already in use")
 
@@ -1726,7 +1726,7 @@ class GetProfileTest(ZulipTestCase):
     def common_update_pointer(self, email, pointer):
         # type: (Text, int) -> None
         self.login(email)
-        result = self.client_put("/json/users/me/pointer", {"pointer": pointer})
+        result = self.client_post("/json/users/me/pointer", {"pointer": pointer})
         self.assert_json_success(result)
 
     def common_get_profile(self, email):
@@ -1812,7 +1812,7 @@ class GetProfileTest(ZulipTestCase):
         json = self.common_get_profile("hamlet@zulip.com")
         self.assertEqual(json["pointer"], id2) # pointer does not move backwards
 
-        result = self.client_put("/json/users/me/pointer", {"pointer": 99999999})
+        result = self.client_post("/json/users/me/pointer", {"pointer": 99999999})
         self.assert_json_error(result, "Invalid message ID")
 
     def test_get_all_profiles_avatar_urls(self):
@@ -2304,3 +2304,47 @@ class TestLoginPage(ZulipTestCase):
         # type: () -> None
         result = self.client_get("/login/?subdomain=1")
         self.assertIn(WRONG_SUBDOMAIN_ERROR, result.content.decode('utf8'))
+
+class FindMyTeamTestCase(ZulipTestCase):
+    def test_template(self):
+        # type: () -> None
+        result = self.client_get('/find-my-team/')
+        self.assertIn("Find your team", result.content.decode('utf8'))
+
+    def test_result(self):
+        # type: () -> None
+        url = '/find-my-team/?emails=iago@zulip.com,cordelia@zulip.com'
+        result = self.client_get(url)
+        content = result.content.decode('utf8')
+        self.assertIn("We have checked the following email address(es)", content)
+        self.assertIn("iago@zulip.com", content)
+        self.assertIn("cordelia@zulip.com", content)
+
+    def test_find_team_zero_emails(self):
+        # type: () -> None
+        data = {'emails': ''}
+        result = self.client_post('/find-my-team/', data)
+        self.assertIn('This field is required', result.content.decode('utf8'))
+        self.assertEqual(result.status_code, 200)
+
+    def test_find_team_one_email(self):
+        # type: () -> None
+        data = {'emails': 'hamlet@zulip.com'}
+        result = self.client_post('/find-my-team/', data)
+        self.assertEqual(result.status_code, 302)
+        self.assertEqual(result.url, '/find-my-team/?emails=hamlet%40zulip.com')
+
+    def test_find_team_multiple_emails(self):
+        # type: () -> None
+        data = {'emails': 'hamlet@zulip.com,iago@zulip.com'}
+        result = self.client_post('/find-my-team/', data)
+        self.assertEqual(result.status_code, 302)
+        expected = '/find-my-team/?emails=hamlet%40zulip.com%2Ciago%40zulip.com'
+        self.assertEqual(result.url, expected)
+
+    def test_find_team_more_than_ten_emails(self):
+        # type: () -> None
+        data = {'emails': ','.join(['hamlet-{}@zulip.com'.format(i) for i in range(11)])}
+        result = self.client_post('/find-my-team/', data)
+        self.assertEqual(result.status_code, 200)
+        self.assertIn("Please enter at most 10", result.content.decode('utf8'))

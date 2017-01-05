@@ -107,7 +107,7 @@ as a “**realm**”.
 * [Mute a topic](/help/mute-a-topic)
 * Set notifications for a single stream
 * [Configure desktop notifications](/help/configure-desktop-notifications)
-* Configure audible notifications
+* [Configure audible notifications](/help/configure-audible-notifications)
 * Configure email notifications
 * Configure mobile push notifications
 * [Add an alert word](/help/alert-words)
@@ -126,6 +126,7 @@ as a “**realm**”.
 * Connect to Zulip over IRC/etc (not implemented?)
 
 # Administering a Zulip organization
+* [Change your administrator settings](/help/edit-administrator-settings)
 
 ## Organization Settings
 * [Change your organization's name](/help/change-your-organizations-name)
@@ -134,7 +135,7 @@ as a “**realm**”.
 * [Only allow admins to invite new users](/help/only-allow-admins-to-invite-new-users)
 * Only allow admins to create new streams
 * [Restrict editing of old messages and topics](/help/restrict-editing-of-old-messages-and-topics)
-* [Change the default language for realm](/help/change-the-default-language-for-realm)
+* [Change the default language for your organization](/help/change-the-default-language-for-your-organization)
 * [Add custom emoji](/help/add-custom-emoji)
 * Configure authentication methods
 * [Add a custom linkification filter](/help/add-a-custom-linkification-filter)
@@ -145,7 +146,7 @@ as a “**realm**”.
 * [Deactivate or reactivate a bot](/help/deactivate-or-reactivate-a-bot)
 * [Make a user an administrator](/help/make-a-user-an-administrator)
 * [Change a user's name](/help/change-a-users-name)
-* View the list of installed bots
+* [View all bots in your organization (admin only)](/help/view-all-bots-in-your-organization)
 
 ## Streams
 * [Delete a stream](/help/delete-a-stream)

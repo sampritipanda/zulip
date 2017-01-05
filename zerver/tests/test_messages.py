@@ -559,6 +559,10 @@ class MessageDictTest(ZulipTestCase):
         delay = time.time() - t
         # Make sure we don't take longer than 1ms per message to extract messages.
         self.assertTrue(delay < 0.001 * num_ids)
+        # Note, this fails if you run
+        # tools/test-backend zerver.tests.test_messages.MessageDictTest or
+        # tools/test-backend zerver.tests.test_messages.MessageDictTest.test_bulk_message_fetching.
+        # You need to run the full suite as tools/test-backend zerver.tests.test_messages.
         self.assert_max_length(queries, 7)
         self.assertEqual(len(rows), num_ids)
 
@@ -893,7 +897,7 @@ class MessagePOSTTest(ZulipTestCase):
                                                      "client": "test suite",
                                                      "content": "Test message",
                                                      "subject": "Test subject",
-                                                     "domain": "mit.edu"})
+                                                     "realm_str": "mit"})
         self.assert_json_error(result, "User not authorized for this query")
 
     def test_send_message_as_superuser_to_domain_that_dont_exist(self):
@@ -910,10 +914,10 @@ class MessagePOSTTest(ZulipTestCase):
                                                      "client": "test suite",
                                                      "content": "Test message",
                                                      "subject": "Test subject",
-                                                     "domain": "non-existing"})
+                                                     "realm_str": "non-existing"})
         user.is_api_super_user = False
         user.save()
-        self.assert_json_error(result, "Unknown domain non-existing")
+        self.assert_json_error(result, "Unknown realm non-existing")
 
     def test_send_message_when_sender_is_not_set(self):
         # type: () -> None

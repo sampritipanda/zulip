@@ -131,6 +131,7 @@ i18n_urls = [
         name='landing-page'),
     url(r'^new-user/$', RedirectView.as_view(url='/hello', permanent=True)),
     url(r'^features/$', TemplateView.as_view(template_name='zerver/features.html')),
+    url(r'^find-my-team/$', zerver.views.auth.find_my_team, name='find-my-team'),
 ]
 
 # If a Terms of Service is supplied, add that route
@@ -175,7 +176,7 @@ v1_api_and_json_patterns = [
     # users -> zerver.views.users
     url(r'^users$', rest_dispatch,
         {'GET': 'zerver.views.users.get_members_backend',
-         'PUT': 'zerver.views.users.create_user_backend'}),
+         'POST': 'zerver.views.users.create_user_backend'}),
     url(r'^users/(?P<email>(?!me)[^/]*)/reactivate$', rest_dispatch,
         {'POST': 'zerver.views.users.reactivate_user_backend'}),
     url(r'^users/(?P<email>(?!me)[^/]*)$', rest_dispatch,
@@ -225,9 +226,12 @@ v1_api_and_json_patterns = [
     url(r'^users/me$', rest_dispatch,
         {'GET': 'zerver.views.users.get_profile_backend',
          'DELETE': 'zerver.views.users.deactivate_user_own_backend'}),
+    # PUT is currently used by mobile apps, we intend to remove the PUT version
+    # as soon as possible. POST exists to correct the erroneous use of PUT.
     url(r'^users/me/pointer$', rest_dispatch,
         {'GET': 'zerver.views.pointer.get_pointer_backend',
-         'PUT': 'zerver.views.pointer.update_pointer_backend'}),
+         'PUT': 'zerver.views.pointer.update_pointer_backend',
+         'POST': 'zerver.views.pointer.update_pointer_backend'}),
     url(r'^users/me/presence$', rest_dispatch,
         {'POST': 'zerver.views.presence.update_active_status_backend'}),
     # Endpoint used by mobile devices to register their push
@@ -281,7 +285,7 @@ v1_api_and_json_patterns = [
          'PATCH': 'zerver.views.streams.update_stream_backend',
          'DELETE': 'zerver.views.streams.deactivate_stream_backend'}),
     url(r'^default_streams$', rest_dispatch,
-        {'PUT': 'zerver.views.streams.add_default_stream',
+        {'POST': 'zerver.views.streams.add_default_stream',
          'DELETE': 'zerver.views.streams.remove_default_stream'}),
     # GET lists your streams, POST bulk adds, PATCH bulk modifies/removes
     url(r'^users/me/subscriptions$', rest_dispatch,
