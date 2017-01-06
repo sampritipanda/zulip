@@ -91,6 +91,32 @@ function render(template_name, args) {
     global.write_handlebars_output("actions_popover_content", html);
 }());
 
+(function admin_alias_list() {
+    var html = "<table>";
+    var args = {
+        alias: {
+            id: 1,
+            domain: 'zulip.org',
+        },
+    };
+    html += render("admin_alias_list", args);
+    html += "</table>";
+
+    var button = $(html).find('.btn');
+    var domain = $(html).find('.domain');
+    var row = button.closest('tr');
+
+    assert.equal(button.text().trim(), "Delete");
+    assert(button.hasClass("delete_alias"));
+    assert.equal(button.data("id"), "1");
+
+    assert.equal(domain.text(), "zulip.org");
+
+    assert.equal(row.attr("id"), "alias_1");
+
+    global.write_handlebars_output("admin_alias_list", html);
+}());
+
 (function admin_default_streams_list() {
     var html = '<table>';
     var streams = ['devel', 'trac', 'zulip'];
@@ -528,6 +554,7 @@ function render(template_name, args) {
         },
     ];
 
+    render('loader');
     var html = render('message_group', {message_groups: groups, use_match_properties: true});
 
     var first_message_text = $(html).next('.recipient_row').find('div.messagebox:first .message_content').text().trim();

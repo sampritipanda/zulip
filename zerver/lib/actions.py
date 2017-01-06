@@ -30,7 +30,7 @@ from zerver.models import Realm, RealmEmoji, Stream, UserProfile, UserActivity, 
     Client, DefaultStream, UserPresence, Referral, PushDeviceToken, MAX_SUBJECT_LENGTH, \
     MAX_MESSAGE_LENGTH, get_client, get_stream, get_recipient, get_huddle, \
     get_user_profile_by_id, PreregistrationUser, get_display_recipient, \
-    get_realm_by_string_id, bulk_get_recipients, \
+    get_realm, bulk_get_recipients, \
     email_allowed_for_realm, email_to_username, display_recipient_cache_key, \
     get_user_profile_by_email, get_stream_cache_key, \
     UserActivityInterval, get_active_user_dicts_in_realm, get_active_streams, \
@@ -2142,7 +2142,7 @@ def do_change_stream_description(realm, stream_name, new_description):
 def do_create_realm(string_id, name, restricted_to_domain=None,
                     invite_required=None, org_type=None):
     # type: (Text, Text, Optional[bool], Optional[bool], Optional[int]) -> Tuple[Realm, bool]
-    realm = get_realm_by_string_id(string_id)
+    realm = get_realm(string_id)
     created = not realm
     if created:
         kwargs = {} # type: Dict[str, Any]
@@ -3091,6 +3091,9 @@ def fetch_initial_state_data(user_profile, event_types, queue_id):
     if want('realm_domain'):
         state['realm_domain'] = user_profile.realm.domain
 
+    if want('realm_domains'):
+        state['realm_domains'] = do_get_realm_aliases(user_profile.realm)
+
     if want('realm_emoji'):
         state['realm_emoji'] = user_profile.realm.get_emoji()
 
@@ -3309,6 +3312,11 @@ def apply_events(state, events, user_profile):
         elif event['type'] == "update_message_flags":
             # The client will get the message with the updated flags directly
             pass
+        elif event['type'] == "realm_domains":
+            if event['op'] == 'add':
+                state['realm_domains'].append(event['alias'])
+            elif event['op'] == 'remove':
+                state['realm_domains'] = [alias for alias in state['realm_domains'] if alias['id'] != event['alias_id']]
         elif event['type'] == "realm_emoji":
             state['realm_emoji'] = event['realm_emoji']
         elif event['type'] == "alert_words":
@@ -3661,9 +3669,27 @@ def get_emails_from_user_ids(user_ids):
     # We may eventually use memcached to speed this up, but the DB is fast.
     return UserProfile.emails_from_ids(user_ids)
 
-def realm_aliases(realm):
-    # type: (Realm) -> List[Text]
-    return [alias.domain for alias in realm.realmalias_set.all()]
+def do_get_realm_aliases(realm):
+    # type: (Realm) -> List[Dict[str, Text]]
+    return list(realm.realmalias_set.values('id', 'domain'))
+
+def do_add_realm_alias(realm, domain):
+    # type: (Realm, Text) -> (RealmAlias)
+    alias = RealmAlias(realm=realm, domain=domain)
+    alias.full_clean()
+    alias.save()
+    event = dict(type="realm_domains", op="add",
+                 alias=dict(id=alias.id,
+                            domain=alias.domain,
+                            ))
+    send_event(event, active_user_ids(realm))
+    return alias
+
+def do_remove_realm_alias(realm, alias_id):
+    # type: (Realm, int) -> None
+    RealmAlias.objects.get(pk=alias_id).delete()
+    event = dict(type="realm_domains", op="remove", alias_id=alias_id)
+    send_event(event, active_user_ids(realm))
 
 def get_occupied_streams(realm):
     # type: (Realm) -> QuerySet

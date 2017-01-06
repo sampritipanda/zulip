@@ -57,8 +57,10 @@ as a “**realm**”.
 * Verify that your message has been successfully sent
 * What to do if the server returns an error
 * Send a status message
-* [@-mention a team member](/help/at-mention-a-team-member) (needs a note that you can't @mention when editing messages, since they may have already read the message / not clear how to notif them)
-* Make an announcement
+* [@-mention a team member](/help/at-mention-a-team-member) (needs a
+  note that you can't @mention when editing messages, since they may
+  have already read the message / not clear how to notif them)
+* [Make an announcement](/help/make-an-announcement)
 * Send a message in a different language
 * [Reply to a message](/help/reply-to-a-message)
 ### Reading
@@ -259,7 +261,7 @@ individual users. ![New message](/static/images/help/new_message.png)
 ### Some facts about messages
 
  * The paperclip icon
-   (![paperclip](/static/images/help/paperclip.png)) under the message
+   (<i class="icon-vector-paper-clip"></i>) under the message
    field lets you attach files, including images, sound, and
    video. These are uploaded to a server and a link is supplied, but
    we display a thumbnail if we can. You’ll see the link in Markdown
@@ -269,7 +271,7 @@ individual users. ![New message](/static/images/help/new_message.png)
    [GitHub Flavored Markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#tables)
    (GFM), and the **A** icon under the message field brings up a
    cheat-sheet for what we support. You can also see that cheat-sheat
-   by going to the cog (<img alt="cog" class="inline" src="/static/images/help/cog.png" />) in the
+   by going to the cog (<i class="icon-vector-cog"></i>) in the
    upper right corner of the right sidebar and choosing “Message
    formatting” from the drop-down menu.
 
@@ -314,7 +316,7 @@ individual users. ![New message](/static/images/help/new_message.png)
 
 ### Keyboard shortcuts
 
-Go to the cog (<img alt="cog" class="inline" src="/static/images/help/cog.png" />) in the upper right
+Go to the cog (<i class="icon-vector-cog"></i>) in the upper right
 corner of the right sidebar and choose “Keyboard shortcuts” from the
 drop-down menu.
 
@@ -411,9 +413,9 @@ of the message is unchanged.
 
 Zulip uses a subset of
 [GitHub Flavored Markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#tables)
-(GFM), To see the current subset, go to the cog
-(<img alt="cog" class="inline" src="/static/images/help/cog.png" />) in the upper right corner of the
-right sidebar and choose “Message formatting” from the drop-down menu.
+(GFM), To see the current subset, go to the cog (<i class="icon-vector-cog"></i>) in the upper
+right corner of the right sidebar and choose “Message formatting” from
+the drop-down menu.
 
 **[Go back to “Other common questions”](#other-common-questions)** |
   **[Go back to “Table of contents”](#using-zulip)**
@@ -438,9 +440,10 @@ right sidebar and choose “Message formatting” from the drop-down menu.
 
  If you have messaged multiple individual users, their names will
  appear at the bottom of the right sidebar. In that case, a pale green
- circle (<span class="indicator green"></span>) means that some are recently but not currently active, while others are state unknown. A regular green circle
- (<span class="indicator green solid"></span>) means they
- are all at least recently active.
+ circle (<span class="indicator green"></span>) means that some are
+ recently but not currently active, while others are state unknown. A
+ regular green circle (<span class="indicator green solid"></span>)
+ means they are all at least recently active.
 
 **[Go back to “Other common questions”](#other-common-questions)** |
   **[Go back to “Table of contents”](#using-zulip)**
@@ -449,7 +452,7 @@ right sidebar and choose “Message formatting” from the drop-down menu.
 
 You can receive all activity from all streams, or just some streams,
 or just messages in which you were mentioned, by playing with the
-Settings — go to the cog (<img alt="cog" class="inline" src="/static/images/help/cog.png" />) in the
+Settings — go to the cog (<i class="icon-vector-cog"></i>) in the
 upper right corner of the right sidebar and choose “Settings”
 there. You can also post to a stream by email — the Manage Streams
 pane shows you the email address to use for any particular stream.
@@ -490,7 +493,7 @@ pane shows you the email address to use for any particular stream.
 ### Customization
 
  * **Zulip**. For customizing Zulip itself, there is a cog
-   (<img alt="cog" class="inline" src="/static/images/help/cog.png" />) in the upper right corner of
+   (<i class="icon-vector-cog"></i>) in the upper right corner of
    the right sidebar, and it brings up a menu of options.
 
  * **Streams**. For customizing your stream subscriptions and
@@ -506,7 +509,7 @@ pane shows you the email address to use for any particular stream.
 
    For customizing an individual stream without opening the Streams
    pane, there is a “down-chevron”
-   ![down chevron](/static/images/help/down_chevron.png) to the right
+   <i class="icon-vector-chevron-down"></i> to the right
    of each stream-name in the left sidebar. Clicking the chevron opens
    a menu of options.
 

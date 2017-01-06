@@ -21,7 +21,7 @@ from zerver.models import Message, UserProfile, Stream, Subscription, Huddle, \
     PreregistrationUser, get_client, UserActivity, \
     get_stream, UserPresence, get_recipient, name_changes_disabled, email_to_username, \
     completely_open, get_unique_open_realm, email_allowed_for_realm, \
-    get_realm_by_string_id, get_realm_by_email_domain, list_of_domains_for_realm
+    get_realm, get_realm_by_email_domain, list_of_domains_for_realm
 from zerver.lib.actions import do_change_password, do_change_full_name, do_change_is_admin, \
     do_activate_user, do_create_user, do_create_realm, set_default_streams, \
     update_user_presence, do_events_register, \
@@ -32,7 +32,7 @@ from zerver.lib.actions import do_change_password, do_change_full_name, do_chang
     do_update_pointer, realm_user_count
 from zerver.lib.push_notifications import num_push_devices_for_user
 from zerver.forms import RegistrationForm, HomepageForm, RealmCreationForm, ToSForm, \
-    CreateUserForm
+    CreateUserForm, FindMyTeamForm
 from zerver.lib.actions import is_inactive
 from django_auth_ldap.backend import LDAPBackend, _LDAPUser
 from zerver.lib.validator import check_string, check_list
@@ -114,7 +114,7 @@ def accounts_register(request):
         # For creating a new realm, there is no existing realm or domain
         realm = None
     elif settings.REALMS_HAVE_SUBDOMAINS:
-        realm = get_realm_by_string_id(get_subdomain(request))
+        realm = get_realm(get_subdomain(request))
     else:
         realm = get_realm_by_email_domain(email)
 
@@ -303,14 +303,14 @@ def create_preregistration_user(email, request, realm_creation=False):
         # The user is trying to sign up for a completely open realm,
         # so create them a PreregistrationUser for that realm
         return PreregistrationUser.objects.create(email=email,
-                                                  realm=get_realm_by_string_id(realm_str),
+                                                  realm=get_realm(realm_str),
                                                   realm_creation=realm_creation)
 
     return PreregistrationUser.objects.create(email=email, realm_creation=realm_creation)
 
 def accounts_home_with_realm_str(request, realm_str):
     # type: (HttpRequest, str) -> HttpResponse
-    if not settings.REALMS_HAVE_SUBDOMAINS and completely_open(get_realm_by_string_id(realm_str)):
+    if not settings.REALMS_HAVE_SUBDOMAINS and completely_open(get_realm(realm_str)):
         # You can sign up for a completely open realm through a
         # special registration path that contains the domain in the
         # URL. We store this information in the session rather than
@@ -385,7 +385,7 @@ def get_realm_from_request(request):
         realm_str = get_subdomain(request)
     else:
         realm_str = request.session.get("realm_str")
-    return get_realm_by_string_id(realm_str)
+    return get_realm(realm_str)
 
 def accounts_home(request):
     # type: (HttpRequest) -> HttpResponse
@@ -702,3 +702,56 @@ def json_set_muted_topics(request, user_profile,
 def generate_204(request):
     # type: (HttpRequest) -> HttpResponse
     return HttpResponse(content=None, status=204)
+
+try:
+    import mailer
+    send_mail = mailer.send_mail
+except ImportError:
+    # no mailer app present, stick with default
+    pass
+
+def send_find_my_team_emails(user_profile):
+    # type: (UserProfile) -> None
+    text_template = 'zerver/emails/find_team/find_team_email.txt'
+    html_template = 'zerver/emails/find_team/find_team_email.html'
+    context = {'user_profile': user_profile}
+    text_content = loader.render_to_string(text_template, context)
+    html_content = loader.render_to_string(html_template, context)
+    sender = settings.NOREPLY_EMAIL_ADDRESS
+    recipients = [user_profile.email]
+    subject = loader.render_to_string('zerver/emails/find_team/find_team_email.subject').strip()
+
+    send_mail(subject, text_content, sender, recipients, html_message=html_content)
+
+def find_my_team(request):
+    # type: (HttpRequest) -> HttpResponse
+    url = reverse('zerver.views.find_my_team')
+
+    emails = []  # type: List[Text]
+    if request.method == 'POST':
+        form = FindMyTeamForm(request.POST)
+        if form.is_valid():
+            emails = form.cleaned_data['emails']
+            for user_profile in UserProfile.objects.filter(email__in=emails):
+                send_find_my_team_emails(user_profile)
+
+            # Note: Show all the emails in the result otherwise this
+            # feature can be used to ascertain which email addresses
+            # are associated with Zulip.
+            data = urllib.parse.urlencode({'emails': ','.join(emails)})
+            return redirect(url + "?" + data)
+    else:
+        form = FindMyTeamForm()
+        result = request.GET.get('emails')
+        if result:
+            for email in result.split(','):
+                try:
+                    validators.validate_email(email)
+                    emails.append(email)
+                except ValidationError:
+                    pass
+
+    return render_to_response('zerver/find_my_team.html',
+                              {'form': form, 'current_url': lambda: url,
+                               'emails': emails},
+                              request=request)
