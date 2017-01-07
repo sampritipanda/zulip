@@ -355,6 +355,13 @@ input.recipient_box {
     display: none;
 }
 
+#drafts-link {
+    position: relative;
+    margin-right: 1em;
+    margin-left: 5px;
+    top: 2px;
+}
+
 #sending-indicator {
     float: left;
     font-weight: bold;

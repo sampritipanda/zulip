@@ -4,12 +4,6 @@
   <div id="compose-container">
     <div id="compose_controls" class="compose-content">
           <div id="compose_buttons">
-            <span class="drafts_button">
-              <button type="button" class="btn btn-default btn-large drafts_button" title="{{ _('Drafts') }}"
-                 href="#drafts">
-                <i class="icon-vector-pencil"></i><span>&nbsp;&nbsp;{{ _('Drafts') }}</span>
-              </button>
-            </span>
             <span class="new_message_button">
               <button type="button" class="btn btn-default btn-large compose_stream_button"
                       id="left_bar_compose_stream_button_big" title="{{ _('New stream message (c)') }}">
@@ -94,6 +88,7 @@
                      href="#markdown-help" title="{{ _('Formatting') }}" data-toggle="modal"></a>
                   <a id="undo_markdown_preview" class="icon-vector-edit" style="display:none;" title="{{ _('Write') }}"></a>
                   <a id="markdown_preview" class="icon-vector-eye-open" title="{{ _('Preview') }}"></a>
+                  <a id="drafts-link" href="#drafts">{{ _('Drafts') }}</a>
                   <span id="sending-indicator">{{ _('Sending...') }}</span>
                   <div id="send_controls">
                     <label id="enter-sends-label" class="compose_checkbox_label" for="enter_sends">{{ _('Press Enter to send') }}&nbsp;</label>
