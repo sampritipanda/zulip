@@ -146,7 +146,7 @@ exports.restore_draft = function (draft_id) {
                               draft_copy);
     }
 
-    $("#draft_overlay").fadeOut(200, function () {
+    $("#draft_overlay").fadeOut(300, function () {
         hashchange.exit_settings();
 
         compose_fade.clear_compose();
@@ -191,10 +191,14 @@ exports.setup_page = function (callback) {
         var drafts = _.mapObject(data, function (draft, id) {
             var formatted;
             if (draft.type === "stream") {
+                // In case there is no stream for the draft, we need a
+                // single space char for proper rendering of the stream label
+                var space_string = new Handlebars.SafeString("&nbsp;");
+                var stream = (draft.stream.length > 0 ? draft.stream : space_string);
                 formatted = {
                     draft_id: id,
                     is_stream: true,
-                    stream: draft.stream,
+                    stream: stream,
                     stream_color: stream_data.get_color(draft.stream),
                     topic: draft.subject,
                     content: echo.apply_markdown(draft.content)

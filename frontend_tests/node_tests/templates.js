@@ -389,7 +389,7 @@ function render(template_name, args) {
             {
                 draft_id: '2',
                 is_stream: false,
-                recipients: 'Jordan, Micheal',
+                recipients: 'Jordan, Michael',
                 content: 'Private draft'
             }
         ]
@@ -412,7 +412,7 @@ function render(template_name, args) {
     assert.equal(row_1.find(".message_content").text().trim(), "Public draft");
 
     var row_2 = $(html).find(".draft-row[data-draft-id='2']");
-    assert.equal(row_2.find(".stream_label").text().trim(), "You and Jordan, Micheal");
+    assert.equal(row_2.find(".stream_label").text().trim(), "You and Jordan, Michael");
     assert(row_2.find(".message_row").hasClass("private-message"));
     assert.equal(row_2.find(".messagebox").css("box-shadow"),
                  "inset 2px 0px 0px 0px #444444, -1px 0px 0px 0px #444444");
