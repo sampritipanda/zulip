@@ -185,12 +185,14 @@ DEFAULT_SETTINGS = {'TWITTER_CONSUMER_KEY': '',
                     'REALM_CREATION_LINK_VALIDITY_DAYS': 7,
                     'TERMS_OF_SERVICE': None,
                     'TOS_VERSION': None,
-                    'SYSTEM_ONLY_REALMS': {"zulip.com"},
+                    'SYSTEM_ONLY_REALMS': {"zulip"},
                     'FIRST_TIME_TOS_TEMPLATE': None,
                     'USING_PGROONGA': False,
                     'POST_MIGRATION_CACHE_FLUSHING': False,
                     'ENABLE_FILE_LINKS': False,
                     'USE_WEBSOCKETS': True,
+                    'PASSWORD_MIN_LENGTH': 6,
+                    'PASSWORD_MIN_ZXCVBN_QUALITY': 0.4,
                     }
 
 for setting_name, setting_val in six.iteritems(DEFAULT_SETTINGS):
@@ -212,7 +214,6 @@ REQUIRED_SETTINGS = [("EXTERNAL_HOST", "zulip.example.com"),
                      ("AUTHENTICATION_BACKENDS", ()),
                      ("NOREPLY_EMAIL_ADDRESS", "noreply@example.com"),
                      ("DEFAULT_FROM_EMAIL", "Zulip <zulip@example.com>"),
-                     ("ALLOWED_HOSTS", ["*", '127.0.0.1', 'localhost']),
                      ]
 
 if ADMINS == "":
@@ -725,6 +726,7 @@ PIPELINE = {
     },
     'JAVASCRIPT': {},
 }
+
 JS_SPECS = {
     'common': {
         'source_filenames': (
@@ -756,7 +758,6 @@ JS_SPECS = {
             'third/bootstrap-notify/js/bootstrap-notify.js',
             'third/html5-formdata/formdata.js',
             'node_modules/jquery-validation/dist/jquery.validate.js',
-            'node_modules/sockjs-client/sockjs.js',
             'third/jquery-form/jquery.form.js',
             'third/jquery-filedrop/jquery.filedrop.js',
             'third/jquery-caret/jquery.caret.1.5.2.js',
@@ -770,6 +771,7 @@ JS_SPECS = {
             'third/spectrum/spectrum.js',
             'third/string-prototype-codepointat/codepointat.js',
             'third/winchan/winchan.js',
+            'third/sockjs/sockjs-0.3.4.js',
             'third/handlebars/handlebars.runtime.js',
             'third/marked/lib/marked.js',
             'templates/compiled.js',
@@ -867,8 +869,8 @@ JS_SPECS = {
     },
     # We also want to minify sockjs separately for the sockjs iframe transport
     'sockjs': {
-        'source_filenames': ('node_modules/sockjs-client/sockjs.js',),
-        'output_filename': 'min/sockjs.min.js'
+        'source_filenames': ('third/sockjs/sockjs-0.3.4.js',),
+        'output_filename': 'min/sockjs-0.3.4.min.js'
     },
 }
 

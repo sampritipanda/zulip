@@ -333,7 +333,7 @@ fi
 ./tools/setup/postgres-init-test-db
 ./tools/do-destroy-rebuild-test-database
 ./manage.py compilemessages
-sudo ./tools/setup/install-node
+sudo ./scripts/lib/install-node
 npm install
 ```
 

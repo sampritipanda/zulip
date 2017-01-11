@@ -897,16 +897,16 @@ $(function () {
             }());
 
             if (flag) {
-                $("label[data-name='" + stream.name + "']").css("display", "block");
+                $("label.add-user-label[data-stream-id='" + stream.stream_id + "']").css("display", "block");
             } else {
-                $("label[data-name='" + stream.name + "']").css("display", "none");
+                $("label.add-user-label[data-stream-id='" + stream.stream_id + "']").css("display", "none");
             }
         });
 
         // Hide users which aren't in filtered users
         _.each(users, function (user) {
             var display_type = filtered_users.hasOwnProperty(user.email)? "block" : "none";
-            $("label[data-name='" + user.email + "']").css({display: display_type});
+            $("label.add-user-label[data-user-id='" + user.user_id + "']").css({display: display_type});
         });
 
         update_announce_stream_state();

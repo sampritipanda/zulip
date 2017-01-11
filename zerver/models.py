@@ -244,12 +244,7 @@ post_save.connect(flush_realm, sender=Realm)
 
 def get_realm(string_id):
     # type: (Text) -> Optional[Realm]
-    if not string_id:
-        return None
-    try:
-        return Realm.objects.get(string_id=string_id)
-    except Realm.DoesNotExist:
-        return None
+    return Realm.objects.filter(string_id=string_id).first()
 
 def completely_open(realm):
     # type: (Realm) -> bool
@@ -270,7 +265,7 @@ def get_unique_open_realm():
     # On production installations, the (usually "zulip.com") system
     # realm is an empty realm just used for system bots, so don't
     # include it in this accounting.
-    realms = realms.exclude(domain__in=settings.SYSTEM_ONLY_REALMS)
+    realms = realms.exclude(string_id__in=settings.SYSTEM_ONLY_REALMS)
     if len(realms) != 1:
         return None
     realm = realms[0]

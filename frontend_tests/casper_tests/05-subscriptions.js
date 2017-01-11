@@ -27,8 +27,8 @@ casper.waitForSelector('.sub_unsub_button.checked', function () {
 });
 
 casper.then(function () {
-    casper.test.assertExists('#user-checkboxes [data-name="cordelia@zulip.com"]', 'Original user list contains Cordelia');
-    casper.test.assertExists('#user-checkboxes [data-name="othello@zulip.com"]', 'Original user list contains Othello');
+    casper.test.assertExists('#user-checkboxes [data-email="cordelia@zulip.com"]', 'Original user list contains Cordelia');
+    casper.test.assertExists('#user-checkboxes [data-email="othello@zulip.com"]', 'Original user list contains Othello');
 });
 
 casper.waitForSelector("#copy-from-stream-expand-collapse", function () {
@@ -36,8 +36,8 @@ casper.waitForSelector("#copy-from-stream-expand-collapse", function () {
 });
 
 casper.waitUntilVisible("#stream-checkboxes", function () {
-    casper.test.assertExists('#stream-checkboxes [data-name="Scotland"]', 'Original stream list contains Scotland');
-    casper.test.assertExists('#stream-checkboxes [data-name="Rome"]', 'Original stream list contains Rome');
+    casper.test.assertExists('#stream-checkboxes [data-stream-name="Scotland"]', 'Original stream list contains Scotland');
+    casper.test.assertExists('#stream-checkboxes [data-stream-name="Rome"]', 'Original stream list contains Rome');
 });
 
 casper.waitForSelector("form#stream_creation_form", function () {
@@ -45,19 +45,19 @@ casper.waitForSelector("form#stream_creation_form", function () {
     casper.fill('form#stream_creation_form', {user_list_filter: 'ot'});
 });
 casper.waitForSelector(".subscriber-list", function () {
-    casper.test.assertEquals(casper.visible('#user-checkboxes [data-name="cordelia@zulip.com"]'),
+    casper.test.assertEquals(casper.visible('#user-checkboxes [data-email="cordelia@zulip.com"]'),
                              false,
                              "Cordelia is not visible"
     );
-    casper.test.assertEquals(casper.visible('#user-checkboxes [data-name="othello@zulip.com"]'),
+    casper.test.assertEquals(casper.visible('#user-checkboxes [data-email="othello@zulip.com"]'),
                              true,
                              "Othello is visible"
     );
-    casper.test.assertEquals(casper.visible('#stream-checkboxes [data-name="Scotland"]'),
+    casper.test.assertEquals(casper.visible('#stream-checkboxes [data-stream-name="Scotland"]'),
                              true,
                              "Scotland is visible"
     );
-    casper.test.assertEquals(casper.visible('#stream-checkboxes [data-name="Rome"]'),
+    casper.test.assertEquals(casper.visible('#stream-checkboxes [data-stream-name="Rome"]'),
                              false,
                              "Rome is not visible"
     );
@@ -67,19 +67,19 @@ casper.then(function () {
     casper.fill('form#stream_creation_form', {user_list_filter: ''});
 });
 casper.then(function () {
-    casper.test.assertEquals(casper.visible('#user-checkboxes [data-name="cordelia@zulip.com"]'),
+    casper.test.assertEquals(casper.visible('#user-checkboxes [data-email="cordelia@zulip.com"]'),
                              true,
                              "Cordelia is visible again"
     );
-    casper.test.assertEquals(casper.visible('#user-checkboxes [data-name="othello@zulip.com"]'),
+    casper.test.assertEquals(casper.visible('#user-checkboxes [data-email="othello@zulip.com"]'),
                              true,
                              "Othello is visible again"
     );
-    casper.test.assertEquals(casper.visible('#stream-checkboxes [data-name="Scotland"]'),
+    casper.test.assertEquals(casper.visible('#stream-checkboxes [data-stream-name="Scotland"]'),
                              true,
                              "Scotland is visible again"
     );
-    casper.test.assertEquals(casper.visible('#stream-checkboxes [data-name="Rome"]'),
+    casper.test.assertEquals(casper.visible('#stream-checkboxes [data-stream-name="Rome"]'),
                              true,
                              "Rome is visible again"
     );
