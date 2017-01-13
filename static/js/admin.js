@@ -138,7 +138,7 @@ exports.update_default_streams_table = function () {
 
 function make_stream_default(stream_name) {
     var data = {
-        stream_name: stream_name
+        stream_name: stream_name,
     };
 
     channel.post({
@@ -151,7 +151,7 @@ function make_stream_default(stream_name) {
             } else {
                 $(".active_stream_row button").text("Failed!");
             }
-        }
+        },
     });
 }
 
@@ -174,8 +174,8 @@ exports.populate_emoji = function (emoji_data) {
             emoji: {
                 name: name, source_url: data.source_url,
                 display_url: data.display_url,
-                author: data.author
-            }
+                author: data.author,
+            },
         }));
     });
     loading.destroy_indicator($('#admin_page_emoji_loading_indicator'));
@@ -191,8 +191,8 @@ exports.populate_filters = function (filters_data) {
                     filter: {
                         pattern: filter[0],
                         url_format_string: filter[1],
-                        id: filter[2]
-                    }
+                        id: filter[2],
+                    },
                 }
             )
         );
@@ -226,8 +226,8 @@ exports.populate_auth_methods = function (auth_methods) {
         auth_methods_table.append(templates.render('admin_auth_methods_list', {
             method: {
                 method: key,
-                enabled: auth_methods[key]
-            }
+                enabled: auth_methods[key],
+            },
         }));
     });
     loading.destroy_indicator($('#admin_page_auth_methods_loading_indicator'));
@@ -247,7 +247,7 @@ function _setup_page() {
             Math.ceil(page_params.realm_message_content_edit_limit_seconds / 60),
         language_list: page_params.language_list,
         realm_default_language: page_params.realm_default_language,
-        realm_waiting_period_threshold: page_params.realm_waiting_period_threshold
+        realm_waiting_period_threshold: page_params.realm_waiting_period_threshold,
     };
     var admin_tab = templates.render('admin_tab', options);
     $("#administration").html(admin_tab);
@@ -284,7 +284,7 @@ function _setup_page() {
         idempotent: true,
         timeout:  10*1000,
         success: populate_users,
-        error: failed_listing_users
+        error: failed_listing_users,
     });
 
     // Populate streams table
@@ -293,7 +293,7 @@ function _setup_page() {
         timeout:  10*1000,
         idempotent: true,
         success: populate_streams,
-        error: failed_listing_streams
+        error: failed_listing_streams,
     });
 
     // Populate authentication methods table
@@ -362,7 +362,7 @@ function _setup_page() {
             success: function () {
                 var row = $(".active_default_stream_row");
                 row.remove();
-            }
+            },
         });
     });
 
@@ -382,7 +382,7 @@ function _setup_page() {
         highlight: true,
         updater: function (stream_name) {
             make_stream_default(stream_name);
-        }
+        },
     });
 
     $("#do_deactivate_user_button").expectOne().click(function () {
@@ -396,7 +396,7 @@ function _setup_page() {
         $("#deactivation_user_modal").modal("hide");
         meta.current_deactivate_user_modal_row.find("button").eq(0).prop("disabled", true).text("Working…");
         channel.del({
-            url: '/json/users/' + email,
+            url: '/json/users/' + encodeURIComponent(email),
             error: function (xhr) {
                 if (xhr.status.toString().charAt(0) === "4") {
                     meta.current_deactivate_user_modal_row.find("button").closest("td").html(
@@ -413,7 +413,7 @@ function _setup_page() {
                 button.text(i18n.t("Reactivate"));
                 meta.current_deactivate_user_modal_row.addClass("deactivated_user");
                 meta.current_deactivate_user_modal_row.find(".user-admin-settings").hide();
-            }
+            },
         });
     });
 
@@ -426,7 +426,7 @@ function _setup_page() {
         var email = get_email_for_user_row(row);
 
         channel.del({
-            url: '/json/bots/' + email,
+            url: '/json/bots/' + encodeURIComponent(email),
             error: function (xhr) {
                 if (xhr.status.toString().charAt(0) === "4") {
                     row.find("button").closest("td").html(
@@ -444,7 +444,7 @@ function _setup_page() {
                 button.removeClass("deactivate");
                 button.text(i18n.t("Reactivate"));
                 row.addClass("deactivated_user");
-            }
+            },
         });
     });
 
@@ -457,7 +457,7 @@ function _setup_page() {
         var email = get_email_for_user_row(row);
 
         channel.post({
-            url: '/json/users/' + email + "/reactivate",
+            url: '/json/users/' + encodeURIComponent(email) + "/reactivate",
             error: function (xhr) {
                 var button = row.find("button");
                 if (xhr.status.toString().charAt(0) === "4") {
@@ -477,7 +477,7 @@ function _setup_page() {
                 button.removeClass("reactivate");
                 button.text(i18n.t("Deactivate"));
                 row.removeClass("deactivated_user");
-            }
+            },
         });
     });
 
@@ -566,7 +566,7 @@ function _setup_page() {
             message_content_edit_limit_seconds:
                 JSON.stringify(parseInt(new_message_content_edit_limit_minutes, 10) * 60),
             default_language: JSON.stringify(new_default_language),
-            waiting_period_threshold: JSON.stringify(parseInt(new_waiting_period_threshold, 10))
+            waiting_period_threshold: JSON.stringify(parseInt(new_waiting_period_threshold, 10)),
         };
 
         channel.patch({
@@ -665,7 +665,7 @@ function _setup_page() {
                 } else {
                     ui.report_error(i18n.t("Failed!"), xhr, name_status);
                 }
-            }
+            },
         });
     });
 
@@ -677,9 +677,9 @@ function _setup_page() {
         var row = $(e.target).closest(".user_row");
         var email = get_email_for_user_row(row);
 
-        var url = "/json/users/" + email;
+        var url = "/json/users/" + encodeURIComponent(email);
         var data = {
-            is_admin: JSON.stringify(true)
+            is_admin: JSON.stringify(true),
         };
 
         channel.patch({
@@ -696,7 +696,7 @@ function _setup_page() {
             error: function (xhr) {
                 var status = row.find(".admin-user-status");
                 ui.report_error(i18n.t("Failed!"), xhr, status);
-            }
+            },
         });
     });
 
@@ -708,9 +708,9 @@ function _setup_page() {
         var row = $(e.target).closest(".user_row");
         var email = get_email_for_user_row(row);
 
-        var url = "/json/users/" + email;
+        var url = "/json/users/" + encodeURIComponent(email);
         var data = {
-            is_admin: JSON.stringify(false)
+            is_admin: JSON.stringify(false),
         };
 
         channel.patch({
@@ -727,7 +727,7 @@ function _setup_page() {
             error: function (xhr) {
                 var status = row.find(".admin-user-status");
                 ui.report_error(i18n.t("Failed!"), xhr, status);
-            }
+            },
         });
     });
 
@@ -754,9 +754,9 @@ function _setup_page() {
             e.preventDefault();
             e.stopPropagation();
 
-            var url = "/json/users/" + email;
+            var url = "/json/users/" + encodeURIComponent(email);
             var data = {
-                full_name: JSON.stringify(full_name.val())
+                full_name: JSON.stringify(full_name.val()),
             };
 
             channel.patch({
@@ -765,7 +765,7 @@ function _setup_page() {
                 success: function () {
                     ui.report_success(i18n.t('Name successfully updated!'), admin_status);
                 },
-                error: failed_changing_name
+                error: failed_changing_name,
             });
         });
     });
@@ -778,8 +778,10 @@ function _setup_page() {
         }
         $("#deactivation_stream_modal").modal("hide");
         $(".active_stream_row button").prop("disabled", true).text("Working…");
+        var stream_name = $(".active_stream_row").find('.stream_name').text();
+        var stream_id = stream_data.get_sub(stream_name).stream_id;
         channel.del({
-            url: '/json/streams/' + encodeURIComponent($(".active_stream_row").find('.stream_name').text()),
+            url: '/json/streams/' + stream_id,
             error: function (xhr) {
                 if (xhr.status.toString().charAt(0) === "4") {
                     $(".active_stream_row button").closest("td").html(
@@ -792,7 +794,7 @@ function _setup_page() {
             success: function () {
                 var row = $(".active_stream_row");
                 row.remove();
-            }
+            },
         });
     });
 
@@ -815,7 +817,7 @@ function _setup_page() {
             success: function () {
                 var row = btn.parents('tr');
                 row.remove();
-            }
+            },
         });
     });
 
@@ -841,7 +843,7 @@ function _setup_page() {
                 var errors = JSON.parse(xhr.responseText).msg;
                 xhr.responseText = JSON.stringify({msg: errors});
                 ui.report_error(i18n.t("Failed!"), xhr, emoji_status);
-            }
+            },
         });
     });
 
@@ -864,7 +866,7 @@ function _setup_page() {
             success: function () {
                 var row = btn.parents('tr');
                 row.remove();
-            }
+            },
         });
     });
 
@@ -903,7 +905,7 @@ function _setup_page() {
                     xhr.responseText = JSON.stringify({msg: errors.__all__});
                     ui.report_error(i18n.t("Failed"), xhr, filter_status);
                 }
-            }
+            },
         });
     });
 
@@ -922,7 +924,7 @@ function _setup_page() {
                 aliases_info.removeClass("text-success");
                 aliases_info.addClass("text-error");
                 aliases_info.text(JSON.parse(xhr.responseText).msg);
-            }
+            },
         });
     });
 
@@ -945,7 +947,7 @@ function _setup_page() {
                 aliases_info.removeClass("text-success");
                 aliases_info.addClass("text-error");
                 aliases_info.text(JSON.parse(xhr.responseText).msg);
-            }
+            },
         });
     });
 

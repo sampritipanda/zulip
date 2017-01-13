@@ -15,7 +15,7 @@ class JiraHookTests(WebhookTestCase):
                                   stream_name="jira",
                                   content_type="application/json")
 
-        self.assert_json_error(result, 'Unknown JIRA event type')
+        self.assert_json_error(result, "Got JIRA event type we don't support: jira:issue_unknown")
 
     def test_custom_stream(self):
         # type: () -> None
@@ -50,17 +50,33 @@ class JiraHookTests(WebhookTestCase):
     def test_commented(self):
         # type: () -> None
         expected_subject = "BUG-15: New bug with hook"
-        expected_message = """Leo Franchi **updated** [BUG-15](http://lfranchi.com:8080/browse/BUG-15) (assigned to **Othello, the Moor of Venice**):
+        expected_message = """Leo Franchi **added comment to** [BUG-15](http://lfranchi.com:8080/browse/BUG-15) (assigned to **Othello, the Moor of Venice**):
 
 
 Adding a comment. Oh, what a comment it is!
 """
         self.send_and_test_stream_message('commented', expected_subject, expected_message)
 
+    def test_comment_edited(self):
+            # type: () -> None
+            expected_subject = "BUG-15: New bug with hook"
+            expected_message = """Leo Franchi **edited comment on** [BUG-15](http://lfranchi.com:8080/browse/BUG-15) (assigned to **Othello, the Moor of Venice**):
+
+
+Adding a comment. Oh, what a comment it is!
+"""
+            self.send_and_test_stream_message('comment_edited', expected_subject, expected_message)
+
+    def test_comment_deleted(self):
+        # type: () -> None
+        expected_subject = "TOM-1: New Issue"
+        expected_message = "Tomasz Kolek **deleted comment from** [TOM-1](https://zuliptomek.atlassian.net/browse/TOM-1) (assigned to **kolaszek@go2.pl**)"
+        self.send_and_test_stream_message('comment_deleted', expected_subject, expected_message)
+
     def test_commented_markup(self):
         # type: () -> None
         expected_subject = "TEST-7: Testing of rich text"
-        expected_message = """Leonardo Franchi [Administrator] **updated** [TEST-7](https://zulipp.atlassian.net/browse/TEST-7):\n\n\nThis is a comment that likes to **exercise** a lot of _different_ `conventions` that `jira uses`.\r\n\r\n~~~\n\r\nthis code is not highlighted, but monospaced\r\n\n~~~\r\n\r\n~~~\n\r\ndef python():\r\n    print "likes to be formatted"\r\n\n~~~\r\n\r\n[http://www.google.com](http://www.google.com) is a bare link, and [Google](http://www.google.com) is given a title.\r\n\r\nThanks!\r\n\r\n~~~ quote\n\r\nSomeone said somewhere\r\n\n~~~\n"""
+        expected_message = """Leonardo Franchi [Administrator] **added comment to** [TEST-7](https://zulipp.atlassian.net/browse/TEST-7):\n\n\nThis is a comment that likes to **exercise** a lot of _different_ `conventions` that `jira uses`.\r\n\r\n~~~\n\r\nthis code is not highlighted, but monospaced\r\n\n~~~\r\n\r\n~~~\n\r\ndef python():\r\n    print "likes to be formatted"\r\n\n~~~\r\n\r\n[http://www.google.com](http://www.google.com) is a bare link, and [Google](http://www.google.com) is given a title.\r\n\r\nThanks!\r\n\r\n~~~ quote\n\r\nSomeone said somewhere\r\n\n~~~\n"""
         self.send_and_test_stream_message('commented_markup', expected_subject, expected_message)
 
     def test_deleted(self):
@@ -77,65 +93,6 @@ Adding a comment. Oh, what a comment it is!
 * Changed assignee from **None** to **Othello, the Moor of Venice**
 """
         self.send_and_test_stream_message('reassigned', expected_subject, expected_message)
-
-    def test_reopened(self):
-        # type: () -> None
-        expected_subject = "BUG-7: More cowbell polease"
-        expected_message = """Leo Franchi **updated** [BUG-7](http://lfranchi.com:8080/browse/BUG-7) (assigned to **Othello, the Moor of Venice**):
-
-* Changed resolution from **Fixed** to **None**
-* Changed status from **Resolved** to **Reopened**
-
-Re-opened yeah!
-"""
-        self.send_and_test_stream_message('reopened', expected_subject, expected_message)
-
-    def test_resolved(self):
-        # type: () -> None
-        expected_subject = "BUG-13: Refreshing the page loses the user's current posi..."
-        expected_message = """Leo Franchi **updated** [BUG-13](http://lfranchi.com:8080/browse/BUG-13) (assigned to **Othello, the Moor of Venice**):
-
-* Changed status from **Open** to **Resolved**
-* Changed assignee from **None** to **Othello, the Moor of Venice**
-* Changed resolution from **None** to **Fixed**
-
-Fixed it, finally!
-"""
-        self.send_and_test_stream_message('resolved', expected_subject, expected_message)
-
-    def test_workflow_postfuncion(self):
-        # type: () -> None
-        expected_subject = "TEST-5: PostTest"
-        expected_message = """Leo Franchi [Administrator] **transitioned** [TEST-5](https://lfranchi-test.atlassian.net/browse/TEST-5) from Resolved to Reopened"""
-        self.send_and_test_stream_message('postfunction_hook', expected_subject, expected_message)
-
-    def test_workflow_postfunction(self):
-        # type: () -> None
-        expected_subject = "TEST-5: PostTest"
-        expected_message = """Leo Franchi [Administrator] **transitioned** [TEST-5](https://lfranchi-test.atlassian.net/browse/TEST-5) from Resolved to Reopened"""
-        self.send_and_test_stream_message('postfunction_hook', expected_subject, expected_message)
-
-    def test_workflow_postfunction_started(self):
-        # type: () -> None
-        expected_subject = "TEST-7: Gluttony of Post Functions"
-        expected_message = """Leo Franchi [Administrator] **transitioned** [TEST-7](https://lfranchi-test.atlassian.net/browse/TEST-7) from Open to Underway"""
-        self.send_and_test_stream_message('postfunction_started', expected_subject, expected_message)
-
-    def test_workflow_postfunction_resolved(self):
-        # type: () -> None
-        expected_subject = "TEST-7: Gluttony of Post Functions"
-        expected_message = """Leo Franchi [Administrator] **transitioned** [TEST-7](https://lfranchi-test.atlassian.net/browse/TEST-7) from Open to Resolved"""
-        self.send_and_test_stream_message('postfunction_resolved', expected_subject, expected_message)
-
-    def test_mention(self):
-        # type: () -> None
-        expected_subject = "TEST-5: Lunch Decision Needed"
-        expected_message = """Leonardo Franchi [Administrator] **updated** [TEST-5](https://zulipp.atlassian.net/browse/TEST-5) (assigned to **Othello, the Moor of Venice**):
-
-
-Making a comment, **Othello, the Moor of Venice** is watching this issue
-"""
-        self.send_and_test_stream_message('watch_mention_updated', expected_subject, expected_message)
 
     def test_priority_updated(self):
         # type: () -> None

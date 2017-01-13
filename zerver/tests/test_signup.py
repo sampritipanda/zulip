@@ -75,12 +75,13 @@ class PublicURLTest(ZulipTestCase):
         # FIXME: We should also test the Tornado URLs -- this codepath
         # can't do so because this Django test mechanism doesn't go
         # through Tornado.
+        denmark_stream_id = Stream.objects.get(name='Denmark').id
         get_urls = {200: ["/accounts/home/", "/accounts/login/"
                           "/en/accounts/home/", "/ru/accounts/home/",
                           "/en/accounts/login/", "/ru/accounts/login/",
                           "/help/"],
                     302: ["/", "/en/", "/ru/"],
-                    401: ["/json/streams/Denmark/members",
+                    401: ["/json/streams/%d/members" % (denmark_stream_id,),
                           "/api/v1/users/me/subscriptions",
                           "/api/v1/messages",
                           "/json/messages",
@@ -971,6 +972,8 @@ class UserSignUpTest(ZulipTestCase):
     def test_failed_signup_due_to_restricted_domain(self):
         # type: () -> None
         realm = get_realm('zulip')
+        realm.invite_required = False
+        realm.save()
         with self.settings(REALMS_HAVE_SUBDOMAINS = True):
             request = HostRequestMock(host = realm.host)
             request.session = {} # type: ignore

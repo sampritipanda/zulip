@@ -5,6 +5,7 @@ import importlib
 import logging
 import optparse
 import os
+import signal
 import sys
 import time
 
@@ -15,6 +16,9 @@ if os.path.exists(os.path.join(our_dir, '../api/zulip')):
     sys.path.insert(0, '../api')
 
 from zulip import Client
+
+def exit_gracefully(signum, frame):
+    sys.exit(0)
 
 class RateLimit(object):
     def __init__(self, message_limit, interval_limit):
@@ -31,12 +35,12 @@ class RateLimit(object):
         else:
             return True
 
-class RestrictedClient(object):
+class BotHandlerApi(object):
     def __init__(self, client):
         # Only expose a subset of our Client's functionality
         user_profile = client.get_profile()
-        self.rate_limit = RateLimit(20, 5)
-        self.client = client
+        self._rate_limit = RateLimit(20, 5)
+        self._client = client
         try:
             self.full_name = user_profile['full_name']
             self.email = user_profile['email']
@@ -46,8 +50,8 @@ class RestrictedClient(object):
             sys.exit(1)
 
     def send_message(self, *args, **kwargs):
-        if self.rate_limit.is_legal():
-            self.client.send_message(*args, **kwargs)
+        if self._rate_limit.is_legal():
+            self._client.send_message(*args, **kwargs)
         else:
             logging.error('-----> !*!*!*MESSAGE RATE LIMIT REACHED, EXITING*!*!*! <-----\n'
                           'Is your bot trapped in an infinite loop by reacting to'
@@ -73,7 +77,7 @@ def get_lib_module(lib_fn):
 def run_message_handler_for_bot(lib_module, quiet, config_file):
     # Make sure you set up your ~/.zuliprc
     client = Client(config_file=config_file)
-    restricted_client = RestrictedClient(client)
+    restricted_client = BotHandlerApi(client)
 
     message_handler = lib_module.handler_class()
 
@@ -147,4 +151,6 @@ def run():
     )
 
 if __name__ == '__main__':
+    original_sigint = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, exit_gracefully)
     run()

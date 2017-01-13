@@ -1119,7 +1119,7 @@
             <li>
             <code>--interval</code>: This flag specifies the interval of time - in minutes - between
             receiving the reminder, and the actual event. For example, an interval of 30 minutes
-            would mean that you would recieve a reminder for an event 30 minutes before it is
+            would mean that you would receive a reminder for an event 30 minutes before it is
             scheduled to occur.
             </li>
         </ol>
@@ -1801,6 +1801,55 @@ key = NAGIOS_BOT_API_KEY
 
     </div>
 
+    <div id="papertrail" class="integration-instructions">
+
+      <p>
+        Zulip supports integration with Papertrail as a
+        <a href="http://www.perforce.com/perforce/doc.current/manuals/p4sag/chapter.scripting.html">Webhook</a>
+        that fires upon finding a certain log. To do this:
+      </p>
+
+      <p>
+        First, create the stream you'd like to use for Papertrail
+        notifications, and subscribe all interested parties to this stream. We
+        recommend the stream name be <code>papertrail</code>. After create a bot named
+        <code>Papertrail</code> and note the API key.
+      </p>
+
+      <p>
+        Next, log into your Papertrail Account and browse through your logs.
+        Search for logs you want to get alerts for and press the <code>Save Search</code>
+        to open up a modal window, then fill out the details and press the
+        <code>Save & Setup an alert button</code>.
+      </p>
+
+      <img class="screenshot" src="/static/images/integrations/papertrail/000.png" />
+
+      <img class="screenshot" src="/static/images/integrations/papertrail/001.png" />
+
+      <p>
+        Go to the <code>Create an alert</code> section, press the <code>Webhooks</code>
+        link and place the below URL into the <code>Webhook URL</code> section. Be sure to set
+        the frequency to either minute, hour or day.
+      </p>
+
+      <p><code>{{ external_api_uri_subdomain }}/v1/external/papertrail?api_key=abcdefgh&amp;stream=papertrail</code></p>
+
+      <img class="screenshot" src="/static/images/integrations/papertrail/002.png" />
+
+      <p>
+        Note: <code>api_key</code> is the API key of your Zulip bot,
+        and <code>stream</code> is the stream name you want the
+        notifications sent to.
+      </p>
+
+      <p>
+        <b>Congratulations! You're done!</b><br /> Your Papertrail notifications will
+        appear in Zulip:
+      </p>
+      <img class="screenshot" src="/static/images/integrations/papertrail/003.png" />
+
+    </div>
 
     <div id="perforce" class="integration-instructions">
 
@@ -2256,7 +2305,7 @@ key = NAGIOS_BOT_API_KEY
       </p>
 
       <p>
-        You will now recieve notifications for the events you have chosen.
+        You will now receive notifications for the events you have chosen.
         Zulip currently supports the following events:
       </p>
 

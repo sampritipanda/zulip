@@ -47,20 +47,37 @@ casper.waitForSelector("form#stream_creation_form", function () {
 casper.waitForSelector(".subscriber-list", function () {
     casper.test.assertEquals(casper.visible('#user-checkboxes [data-email="cordelia@zulip.com"]'),
                              false,
-                             "Cordelia is not visible"
-    );
+                             "Cordelia is not visible");
     casper.test.assertEquals(casper.visible('#user-checkboxes [data-email="othello@zulip.com"]'),
                              true,
-                             "Othello is visible"
-    );
+                             "Othello is visible");
     casper.test.assertEquals(casper.visible('#stream-checkboxes [data-stream-name="Scotland"]'),
                              true,
-                             "Scotland is visible"
-    );
+                             "Scotland is visible");
     casper.test.assertEquals(casper.visible('#stream-checkboxes [data-stream-name="Rome"]'),
                              false,
-                             "Rome is not visible"
-    );
+                             "Rome is not visible");
+});
+casper.then(function () {
+    casper.test.info("Check Uncheck only visible users for new stream");
+    casper.click('.subs_set_all_users');
+    casper.wait(100, function () {
+        casper.test.assert(casper.evaluate(function () {
+            return !$('#user-checkboxes [value="cordelia@zulip.com"]')[0].checked;
+        }), "Cordelia is unchecked");
+        casper.test.assert(casper.evaluate(function () {
+            return $('#user-checkboxes [value="othello@zulip.com"]')[0].checked;
+        }), "Othello is checked");
+    });
+});
+casper.then(function () {
+    casper.test.info("Check Uncheck only visible users for new stream");
+    casper.click('.subs_unset_all_users');
+    casper.wait(100, function () {
+        casper.test.assert(casper.evaluate(function () {
+            return !$('#user-checkboxes [value="othello@zulip.com"]')[0].checked;
+        }), "Othello is unchecked");
+    });
 });
 casper.then(function () {
     casper.test.info("Clearing user filter search box");
@@ -69,20 +86,16 @@ casper.then(function () {
 casper.then(function () {
     casper.test.assertEquals(casper.visible('#user-checkboxes [data-email="cordelia@zulip.com"]'),
                              true,
-                             "Cordelia is visible again"
-    );
+                             "Cordelia is visible again");
     casper.test.assertEquals(casper.visible('#user-checkboxes [data-email="othello@zulip.com"]'),
                              true,
-                             "Othello is visible again"
-    );
+                             "Othello is visible again");
     casper.test.assertEquals(casper.visible('#stream-checkboxes [data-stream-name="Scotland"]'),
                              true,
-                             "Scotland is visible again"
-    );
+                             "Scotland is visible again");
     casper.test.assertEquals(casper.visible('#stream-checkboxes [data-stream-name="Rome"]'),
                              true,
-                             "Rome is visible again"
-    );
+                             "Rome is visible again");
 });
 casper.waitForSelector('#stream_creation_form', function () {
     casper.test.assertTextExists('Add New Stream', 'New stream creation panel');

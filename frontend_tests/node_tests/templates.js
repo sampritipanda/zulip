@@ -607,7 +607,7 @@ function render(template_name, args) {
 (function message_reaction() {
     var args = {
         emoji_name: 'smile',
-        message_id: '1'
+        message_id: '1',
     };
 
     var html = '';

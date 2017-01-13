@@ -161,7 +161,7 @@ exports.add_messages = function add_messages(messages, msg_list, opts) {
     }
 };
 
-function maybe_add_narrowed_messages(messages, msg_list, messages_are_new) {
+function maybe_add_narrowed_messages(messages, msg_list, messages_are_new, local_id) {
     var ids = [];
     _.each(messages, function (elem) {
         ids.push(elem.id);
@@ -194,7 +194,7 @@ function maybe_add_narrowed_messages(messages, msg_list, messages_are_new) {
             new_messages = _.map(new_messages, add_message_metadata);
             exports.add_messages(new_messages, msg_list, {messages_are_new: messages_are_new});
             unread.process_visible();
-            notifications.possibly_notify_new_messages_outside_viewport(new_messages);
+            notifications.possibly_notify_new_messages_outside_viewport(new_messages, local_id);
             notifications.notify_messages_outside_current_search(elsewhere_messages);
         },
         error: function () {
@@ -203,7 +203,7 @@ function maybe_add_narrowed_messages(messages, msg_list, messages_are_new) {
                 if (msg_list === current_msg_list) {
                     // Don't actually try again if we unnarrowed
                     // while waiting
-                    maybe_add_narrowed_messages(messages, msg_list, messages_are_new);
+                    maybe_add_narrowed_messages(messages, msg_list, messages_are_new, local_id);
                 }
             }, 5000);
         }});
@@ -267,7 +267,7 @@ exports.update_messages = function update_messages(events) {
                             var operators = new_filter.operators();
                             var opts = {
                                 trigger: 'topic change',
-                                then_select_id: current_id
+                                then_select_id: current_id,
                             };
                             narrow.activate(operators, opts);
                             changed_narrow = true;
@@ -334,7 +334,7 @@ exports.do_unread_count_updates = function do_unread_count_updates(messages) {
     resize.resize_page_components();
 };
 
-exports.insert_new_messages = function insert_new_messages(messages) {
+exports.insert_new_messages = function insert_new_messages(messages, local_id) {
     messages = _.map(messages, add_message_metadata);
 
     // You must add add messages to home_msg_list BEFORE
@@ -345,13 +345,13 @@ exports.insert_new_messages = function insert_new_messages(messages) {
     if (narrow.active()) {
         if (narrow.filter().can_apply_locally()) {
             exports.add_messages(messages, message_list.narrowed, {messages_are_new: true});
-            notifications.possibly_notify_new_messages_outside_viewport(messages);
+            notifications.possibly_notify_new_messages_outside_viewport(messages, local_id);
         } else {
             // if we cannot apply locally, we have to wait for this callback to happen to notify
-            maybe_add_narrowed_messages(messages, message_list.narrowed, true);
+            maybe_add_narrowed_messages(messages, message_list.narrowed, true, local_id);
         }
     } else {
-        notifications.possibly_notify_new_messages_outside_viewport(messages);
+        notifications.possibly_notify_new_messages_outside_viewport(messages, local_id);
     }
 
     activity.process_loaded_messages(messages);
@@ -496,7 +496,7 @@ exports.load_old_messages = function load_old_messages(opts) {
             setTimeout(function () {
                 exports.load_old_messages(opts);
             }, 5000);
-        }
+        },
     });
 };
 
@@ -529,7 +529,7 @@ exports.load_more_messages = function load_more_messages(msg_list) {
             if (messages.length >= batch_size) {
                 load_more_enabled = true;
             }
-        }
+        },
     });
 };
 
@@ -561,7 +561,7 @@ util.execute_early(function () {
                     num_before: 0,
                     num_after: 400,
                     msg_list: home_msg_list,
-                    cont: load_more
+                    cont: load_more,
                 });
                 return;
             }
@@ -578,7 +578,7 @@ util.execute_early(function () {
                                   anchor: first_id,
                                   num_before: backfill_batch_size,
                                   num_after: 0,
-                                  msg_list: home_msg_list
+                                  msg_list: home_msg_list,
                               });
                           }});
     }
@@ -589,7 +589,7 @@ util.execute_early(function () {
             num_before: 200,
             num_after: 200,
             msg_list: home_msg_list,
-            cont: load_more
+            cont: load_more,
         });
     } else {
         server_events.home_view_loaded();

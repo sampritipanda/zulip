@@ -368,6 +368,11 @@ $(function () {
         compose.cancel();
     });
 
+    $("#join_unsub_stream").click(function () {
+        subs.launch();
+        components.toggle.lookup("stream-filter-toggle").goto("All Streams");
+    });
+
     // FEEDBACK
 
     // Keep these 2 feedback bot triggers separate because they have to
@@ -396,8 +401,8 @@ $(function () {
             relay_url: "https://webathena.mit.edu/relay.html",
             params: {
                 realm: "ATHENA.MIT.EDU",
-                principal: principal
-            }
+                principal: principal,
+            },
         }, function (err, r) {
             if (err) {
                 blueslip.warn(err);
@@ -416,7 +421,7 @@ $(function () {
                 },
                 error: function () {
                     $("#zephyr-mirror-error").show();
-                }
+                },
             });
         });
         $('#settings-dropdown').dropdown("toggle");
@@ -454,13 +459,13 @@ $(function () {
             if ($target.parent().hasClass("youtube-video")) {
                 ui.lightbox({
                     type: "youtube",
-                    id: $target.data("id")
+                    id: $target.data("id"),
                 });
             } else {
                 ui.lightbox({
                     type: "photo",
                     image: img,
-                    user: user
+                    user: user,
                 });
             }
         });

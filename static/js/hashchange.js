@@ -15,9 +15,17 @@ exports.encodeHashComponent = function (str) {
         .replace(/%/g,  '.');
 };
 
+exports.encode_operand = function (operator, operand) {
+    return exports.encodeHashComponent(operand);
+};
+
 function decodeHashComponent(str) {
     return decodeURIComponent(str.replace(/\./g, '%'));
 }
+
+exports.decode_operand = function (operator, operand) {
+    return decodeHashComponent(operand);
+};
 
 function set_hash(hash) {
     var location = window.location;
@@ -67,7 +75,7 @@ exports.operators_to_hash = function (operators) {
 
             var sign = elem.negated ? '-' : '';
             hash += '/' + sign + hashchange.encodeHashComponent(operator)
-                  + '/' + hashchange.encodeHashComponent(operand);
+                  + '/' + hashchange.encode_operand(operator, operand);
         });
     }
 
@@ -82,7 +90,7 @@ exports.save_narrow = function (operators) {
     exports.changehash(new_hash);
 };
 
-function parse_narrow(hash) {
+exports.parse_narrow = function (hash) {
     var i;
     var operators = [];
     for (i=1; i<hash.length; i+=2) {
@@ -90,7 +98,7 @@ function parse_narrow(hash) {
         // but the user might write one.
         try {
             var operator = decodeHashComponent(hash[i]);
-            var operand  = decodeHashComponent(hash[i+1] || '');
+            var operand  = exports.decode_operand(operator, hash[i+1] || '');
             var negated = false;
             if (operator[0] === '-') {
                 negated = true;
@@ -102,7 +110,7 @@ function parse_narrow(hash) {
         }
     }
     return operators;
-}
+};
 
 function activate_home_tab() {
     ui.change_tab_to("#home");
@@ -135,7 +143,7 @@ function do_hashchange(from_reload) {
     switch (hash[0]) {
     case "#narrow":
         ui.change_tab_to("#home");
-        var operators = parse_narrow(hash);
+        var operators = exports.parse_narrow(hash);
         if (operators === undefined) {
             // If the narrow URL didn't parse, clear
             // window.location.hash and send them to the home tab
@@ -146,7 +154,7 @@ function do_hashchange(from_reload) {
         var narrow_opts = {
             select_first_unread: true,
             change_hash:    false,  // already set
-            trigger: 'hash change'
+            trigger: 'hash change',
         };
         if (from_reload !== undefined && page_params.initial_narrow_pointer !== undefined) {
             narrow_opts.from_reload = true;
@@ -190,7 +198,7 @@ function do_hashchange(from_reload) {
 // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- - -- //
 var ignore = {
     flag: false,
-    prev: null
+    prev: null,
 };
 
 function get_main_hash(hash) {

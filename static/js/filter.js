@@ -175,7 +175,7 @@ Filter.canonicalize_term = function (opts) {
     return {
         negated: negated,
         operator: operator,
-        operand: operand
+        operand: operand,
     };
 };
 
@@ -195,7 +195,7 @@ function encodeOperand(operand) {
 }
 
 function decodeOperand(encoded, operator) {
-    if (operator !== 'pm-with' && operator !== 'sender') {
+    if (operator !== 'pm-with' && operator !== 'sender' && operator !== 'from') {
         encoded = encoded.replace(/\+/g, ' ');
     }
     return util.robust_uri_decode(encoded);
@@ -373,7 +373,7 @@ Filter.prototype = {
                 return ok;
             });
         };
-    }
+    },
 };
 
 Filter.operator_to_prefix = function (operator, negated) {

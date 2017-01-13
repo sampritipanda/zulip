@@ -9,6 +9,33 @@ var emoji_map_is_open = false;
 
 var userlist_placement = "right";
 
+var list_of_popovers = [];
+
+// this utilizes the proxy pattern to intercept all calls to $.fn.popover
+// and push the $.fn.data($o, "popover") results to an array.
+// this is needed so that when we try to unload popovers, we can kill all dead
+// ones that no longer have valid parents in the DOM.
+(function (popover) {
+
+    $.fn.popover = function () {
+        // apply the jQuery object as `this`, and popover function arguments.
+        popover.apply(this, arguments);
+
+        // if there is a valid "popover" key in the jQuery data object then
+        // push it to the array.
+        if (this.data("popover")) {
+            list_of_popovers.push(this.data("popover"));
+        }
+    };
+
+    // add back all shallow properties of $.fn.popover to the new proxied version.
+    for (var x in popover) {
+        if (popover.hasOwnProperty(x)) {
+            $.fn.popover[x] = popover[x];
+        }
+    }
+}($.fn.popover));
+
 function show_message_info_popover(element, id) {
     var last_popover_elem = current_message_info_popover_elem;
     popovers.hide_all();
@@ -29,7 +56,7 @@ function show_message_info_popover(element, id) {
             message:  message,
             pm_with_uri: narrow.pm_with_uri(message.sender_email),
             sent_by_uri: narrow.by_sender_uri(message.sender_email),
-            narrowed: narrow.active()
+            narrowed: narrow.active(),
         };
 
         var ypos = elt.offset().top - viewport.scrollTop();
@@ -37,7 +64,7 @@ function show_message_info_popover(element, id) {
             placement: (ypos > (viewport.height() - 300)) ? 'top' : 'bottom',
             title:     templates.render('message_info_popover_title',   args),
             content:   templates.render('message_info_popover_content', args),
-            trigger:   "manual"
+            trigger:   "manual",
         });
         elt.popover("show");
         current_message_info_popover_elem = elt;
@@ -47,6 +74,7 @@ function show_message_info_popover(element, id) {
 exports.toggle_reactions_popover = function (element, id) {
     var last_popover_elem = current_message_reactions_popover_elem;
     popovers.hide_all();
+    $(element).closest('.message_row').toggleClass('has_popover has_reactions_popover');
     if (last_popover_elem !== undefined
         && last_popover_elem.get()[0] === element) {
         // We want it to be the case that a user can dismiss a popover
@@ -64,7 +92,7 @@ exports.toggle_reactions_popover = function (element, id) {
             emojis[realm_emoji_name] = {
                 name: realm_emoji_name,
                 is_realm_emoji: true,
-                url: realm_emoji.emoji_url
+                url: realm_emoji.emoji_url,
             };
         });
         _.each(emojis_used, function (emoji_name) {
@@ -75,7 +103,7 @@ exports.toggle_reactions_popover = function (element, id) {
                 has_reacted: true,
                 css_class: emoji.emoji_name_to_css_class(emoji_name),
                 is_realm_emoji: is_realm_emoji,
-                url: url
+                url: url,
             };
         });
 
@@ -107,7 +135,7 @@ exports.toggle_reactions_popover = function (element, id) {
             placement: placement,
             title:     "",
             content:   templates.render('reaction_popover_content', args),
-            trigger:   "manual"
+            trigger:   "manual",
         });
         elt.popover("show");
         elt.prop('title', 'Add reaction...');
@@ -119,6 +147,7 @@ exports.toggle_reactions_popover = function (element, id) {
 exports.toggle_actions_popover = function (element, id) {
     var last_popover_elem = current_actions_popover_elem;
     popovers.hide_all();
+    $(element).closest('.message_row').toggleClass('has_popover has_actions_popover');
     if (last_popover_elem !== undefined
         && last_popover_elem.get()[0] === element) {
         // We want it to be the case that a user can dismiss a popover
@@ -160,7 +189,7 @@ exports.toggle_actions_popover = function (element, id) {
             can_unmute_topic: can_unmute_topic,
             should_display_add_reaction_option: message.sent_by_me,
             conversation_time_uri: narrow.by_conversation_and_time_uri(message),
-            narrowed: narrow.active()
+            narrowed: narrow.active(),
         };
 
         var ypos = elt.offset().top - viewport.scrollTop();
@@ -168,7 +197,7 @@ exports.toggle_actions_popover = function (element, id) {
             placement: (ypos > (viewport.height() - 300)) ? 'top' : 'bottom',
             title:     "",
             content:   templates.render('actions_popover_content', args),
-            trigger:   "manual"
+            trigger:   "manual",
         });
         elt.popover("show");
         current_actions_popover_elem = elt;
@@ -237,7 +266,7 @@ exports.topic_ops = {
         popovers.hide_topic_sidebar_popover();
         muting.unmute_topic(stream, topic);
         muting_ui.persist_and_rerender();
-    }
+    },
 };
 
 function message_info_popped() {
@@ -345,7 +374,7 @@ exports.hide_user_sidebar_popover = function () {
 
 function render_emoji_popover() {
     var content = templates.render('emoji_popover_content', {
-        emoji_list: emoji.emojis_name_to_css_class
+        emoji_list: emoji.emojis_name_to_css_class,
     });
 
     $('.emoji_popover').append(content);
@@ -395,11 +424,11 @@ exports.register_click_handlers = function () {
         var meta = {
           drag: false,
           c: {
-            y: null
+            y: null,
           },
           $popover: $(".emoji_popover"),
           MIN_HEIGHT: 25,
-          MAX_HEIGHT: 300
+          MAX_HEIGHT: 300,
         };
 
         // drag must start within the .drag zone.
@@ -435,7 +464,7 @@ exports.register_click_handlers = function () {
     $(".emoji_popover").on("click", ".emoji", function (e) {
         var emoji_choice = $(e.target).attr("title");
         var textarea = $("#new_message_content");
-        textarea.val(textarea.val() + " " + emoji_choice);
+        textarea.caret(emoji_choice);
         textarea.focus();
         e.stopPropagation();
     });
@@ -543,7 +572,7 @@ exports.register_click_handlers = function () {
             content:   content,
             placement: userlist_placement === "left" ? "right" : "left",
             trigger:   "manual",
-            fixed: true
+            fixed: true,
         });
         target.popover("show");
         current_user_sidebar_user_id = user_id;
@@ -576,13 +605,13 @@ exports.register_click_handlers = function () {
             stream_name: stream_name,
             topic_name: topic_name,
             can_mute_topic: can_mute_topic,
-            can_unmute_topic: can_unmute_topic
+            can_unmute_topic: can_unmute_topic,
         });
 
         $(elt).popover({
             content: content,
             trigger: "manual",
-            fixed: true
+            fixed: true,
         });
 
         $(elt).popover("show");
@@ -600,7 +629,7 @@ exports.register_click_handlers = function () {
 
         var operators = [
             {operator: 'stream', operand: stream_name},
-            {operator: 'topic', operand: topic_name}
+            {operator: 'topic', operand: topic_name},
         ];
         var opts = {select_first_unread: true, trigger: 'sidebar'};
         narrow.activate(operators, opts);
@@ -650,7 +679,7 @@ exports.register_click_handlers = function () {
         $(elt).popover({
             content:   templates.render('stream_sidebar_actions', {stream: stream_data.get_sub(stream)}),
             trigger:   "manual",
-            fixed: true
+            fixed: true,
         });
 
         // This little function is a workaround for the fact that
@@ -833,6 +862,7 @@ exports.any_active = function () {
 };
 
 exports.hide_all = function () {
+    $('.has_popover').removeClass('has_popover has_actions_popover has_reactions_popover');
     popovers.hide_actions_popover();
     popovers.hide_message_info_popover();
     popovers.hide_reactions_popover();
@@ -842,6 +872,13 @@ exports.hide_all = function () {
     popovers.hide_userlist_sidebar();
     popovers.hide_streamlist_sidebar();
     popovers.hide_emoji_map_popover();
+
+    // look through all the popovers that have been added and removed.
+    list_of_popovers.forEach(function ($o) {
+        if (!document.body.contains($o.$element[0]) && $o.$tip) {
+            $o.$tip.remove();
+        }
+    });
 };
 
 exports.set_userlist_placement = function (placement) {

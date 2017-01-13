@@ -12,7 +12,7 @@ cross-platform version and a version for Platform 9. See
 [the documentation on apps](/apps) for more information.
 
 One Zulip account, associated with a particular group or organization, is known
-as a **organization**.
+as an **organization**.
 
 ---
 
@@ -29,7 +29,7 @@ as a **organization**.
 * [Change your language](/help/change-your-language)
 * [Change the date and time format](/help/change-the-date-and-time-format)
 * [Move the users list to the left sidebar](/help/move-the-users-list-to-the-left-sidebar)
-* Join a Zulip organization
+* [Join a Zulip organization](/help/join-a-zulip-organization)
 * [Signing in](/help/signing-in)
 * [Signing out](/help/signing-out)
 * Find your Zulip organization (not implemented)
@@ -48,7 +48,7 @@ as a **organization**.
 * Automatically link to an external issue tracker (improve wording)
 * Add a link preview
 * [Enable or disable pressing enter to send](/help/enable-or-disable-pressing-enter-to-send)
-* Verify that your message has been successfully sent
+* [Verify that your message has been successfully sent](/help/verify-that-your-message-has-been-successfully-sent)
 * What to do if the server returns an error
 * [Send a status message](/help/send-a-status-message)
 * [@-mention a team member](/help/at-mention-a-team-member) (needs a
@@ -98,6 +98,7 @@ as a **organization**.
 * Convert a group PM to a private stream (not implemented)
 * [Remove someone from a stream (admin only)](/help/remove-someone-from-a-stream)
 * [Delete a stream (admin only)](/help/delete-a-stream)
+* [Organize the streams sidebar](/help/organize-the-streams-sidebar)
 
 ## Notifications
 * [Mute a stream](/help/mute-a-stream)
@@ -106,7 +107,7 @@ as a **organization**.
 * [Configure desktop notifications](/help/configure-desktop-notifications)
 * [Configure audible notifications](/help/configure-audible-notifications)
 * Configure email notifications
-* Configure mobile push notifications
+* [Configure mobile push notifications](/help/configure-mobile-notifications)
 * [Add an alert word](/help/alert-words)
 
 ## Tools & Customization
@@ -127,7 +128,7 @@ as a **organization**.
 ## Organization Settings
 * [Change your administrator settings](/help/edit-administrator-settings)
 * [Change your organization's name](/help/change-your-organizations-name)
-* Restrict user email addresses to certain domains
+* [Restrict user email addresses to certain domains](/help/restrict-user-email-addresses-to-certain-domains)
 * [Allow anyone to join without an invitation](/help/allow-anyone-to-join-without-an-invitation)
 * [Only allow admins to invite new users](/help/only-allow-admins-to-invite-new-users)
 * [Only allow admins to create new streams](/help/only-allow-admins-to-create-new-streams-feature)
