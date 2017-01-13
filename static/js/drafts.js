@@ -2,105 +2,64 @@ var drafts = (function () {
 
 var exports = {};
 
-var Draft = (function () {
-    var fn = {
-        // the key that the drafts are stored under.
-        KEY: "drafts",
+var draft_model = (function () {
+    var exports = {};
 
-        // create a new UNIQUE key to use.
-        createKey: function () {
-            // use the base16 of the current time + a random string to reduce
-            // collisions to essentially zero.
-            return new Date().getTime().toString(16) + "-" + Math.random().toString(16).split(/\./).pop();
-        },
+    // the key that the drafts are stored under.
+    var KEY = "drafts";
+    var ls = localstorage();
+    ls.version = 1;
 
-        addDraft: function (drafts, draft) {
-            var id = fn.createKey();
+    function createKey () {
+        // use the base16 of the current time + a random string to reduce
+        // collisions to essentially zero.
+        return new Date().getTime().toString(16) + "-" + Math.random().toString(16).split(/\./).pop();
+    }
 
+    function get () {
+        return ls.get(KEY) || {};
+    }
+    exports.get = get;
+
+    exports.getDraft = function (id) {
+        return get()[id] || false;
+    }
+
+    function save (drafts) {
+        ls.set(KEY, drafts);
+    }
+
+    exports.addDraft = function (draft) {
+        var drafts = get();
+
+        var id = createKey();
+        draft.updatedAt = new Date().getTime();
+        drafts[id] = draft;
+        save(drafts);
+
+        return id;
+    }
+
+    exports.editDraft = function (id, draft) {
+        var drafts = get();
+
+        if (drafts[id]) {
             draft.updatedAt = new Date().getTime();
             drafts[id] = draft;
-
-            return id;
-        },
-
-        editDraft: function (drafts, id, draft) {
-            if (drafts[id]) {
-                draft.updatedAt = new Date().getTime();
-                drafts[id] = draft;
-            }
-        },
-
-        deleteDraft: function (drafts, id) {
-            delete drafts[id];
-        },
-
-        getDraft: function (drafts, id) {
-            return drafts[id] || false;
-        },
-
-        createEmptyDrafts: function () {
-            return {};
+            save(drafts);
         }
-    };
+    }
 
-    // ls = a `localstorage` instance.
-    return function (ls, version) {
-        if (typeof version !== "undefined") {
-            ls.version = version;
-        }
+    exports.deleteDraft = function (id) {
+        var drafts = get();
 
-        var drafts = ls.get(fn.KEY) || fn.createEmptyDrafts();
+        delete drafts[id];
+        save(drafts);
+    }
 
-        var prototype = {
-            addDraft: function (draft) {
-                return fn.addDraft(drafts, draft);
-            },
-            editDraft: function (id, draft) {
-                fn.editDraft(drafts, id, draft);
-            },
-            deleteDraft: function (id) {
-                fn.deleteDraft(drafts, id);
-            },
-            delete: function () {
-                drafts = fn.createEmptyDrafts();
-                ls.set(fn.KEY, drafts);
-            },
-            save: function () {
-                ls.set(fn.KEY, drafts);
-            },
-            getDraft: function (id) {
-                return fn.getDraft(drafts, id);
-            },
-            get: function () {
-                return drafts;
-            },
-            migrate: function (v1, v2, callback) {
-                drafts = ls.migrate(fn.KEY, v1, v2, callback) || fn.createEmptyDrafts();
-                ls.version = v2;
-
-                return drafts;
-            }
-        };
-
-        // set a new master version for the LocalStorage instance.
-        Object.defineProperty(prototype, "version", {
-            get: function () {
-                return ls.version;
-            },
-            set: function (version) {
-                ls.version = version;
-                drafts = ls.get(fn.KEY);
-
-                return prototype;
-            }
-        });
-
-        return prototype;
-    };
+    return exports;
 }());
 
-var ls = localstorage();
-var draft_model = Draft(ls, 1);
 exports.draft_model = draft_model;
 
 exports.update_draft = function () {
@@ -117,7 +76,6 @@ exports.update_draft = function () {
         if (draft !== undefined) {
             var new_draft_id = draft_model.addDraft(draft);
             $("#new_message_content").data("draft-id", new_draft_id);
-            draft_model.save();
         }
     }
 };
@@ -162,7 +120,6 @@ exports.setup_page = function (callback) {
     function setup_event_handlers() {
         window.addEventListener("beforeunload", function () {
             exports.update_draft();
-            exports.draft_model.save();
         });
 
         $("#new_message_content").focusout(exports.update_draft);
