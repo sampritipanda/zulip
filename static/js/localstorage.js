@@ -29,59 +29,46 @@ var localstorage = (function () {
             };
         },
 
-        getData: function (version, name, keys) {
+        getData: function (version, name) {
             var key = this.formGetter(version, name);
+            var data = localStorage.getItem(key);
+            data = ls.parseJSON(data);
 
-            // try to retrieve from memory before retrieving from disk.
-            if (keys[key]) {
-                if (!ls.isExpired(keys[key].expires)) {
-                    return keys[key];
-                }
-            // otherwise attempt to retrieve the value of the key from disk.
-            } else {
-                var data = localStorage.getItem(key);
-
-                data = ls.parseJSON(data);
-
-                if (data) {
-                    if (data.__valid) {
-                        // JSON forms of data with `Infinity` turns into `null`,
-                        // so if null then it hasn't expired since nothing was specified.
-                        if (!ls.isExpired(data.expires) || data.expires === null) {
-                            return data;
-                        }
+            if (data) {
+                if (data.__valid) {
+                    // JSON forms of data with `Infinity` turns into `null`,
+                    // so if null then it hasn't expired since nothing was specified.
+                    if (!ls.isExpired(data.expires) || data.expires === null) {
+                        return data;
                     }
                 }
             }
         },
 
         // set the wrapped version of the data into localStorage.
-        setData: function (version, name, data, expires, keys) {
+        setData: function (version, name, data, expires) {
             var key = this.formGetter(version, name);
+            var val = this.formData(data, expires);
 
-            keys[key] = this.formData(data, expires);
-
-            localStorage.setItem(key, JSON.stringify(keys[key]));
+            localStorage.setItem(key, JSON.stringify(val));
         },
 
         // remove the key from localStorage and from memory.
-        removeData: function (version, name, keys) {
+        removeData: function (version, name) {
             var key = this.formGetter(version, name);
-
-            delete keys[key];
 
             localStorage.removeItem(key);
         },
 
         // migrate from an older version of a data src to a newer one with a
         // specified callback function.
-        migrate: function (name, v1, v2, keys, callback) {
-            var old = this.getData(v1, name, keys);
-            this.removeData(v1, name, keys);
+        migrate: function (name, v1, v2, callback) {
+            var old = this.getData(v1, name);
+            this.removeData(v1, name);
 
             if (old && old.__valid) {
                 var data = callback(old.data);
-                this.setData(v2, name, data, Infinity, keys);
+                this.setData(v2, name, data, Infinity);
 
                 return data;
             }
@@ -94,7 +81,6 @@ var localstorage = (function () {
             VERSION: 1,
             expires: Infinity,
             expiresIsGlobal: false,
-            keys: {}
         };
 
         var prototype = {
@@ -109,7 +95,7 @@ var localstorage = (function () {
             },
 
             get: function (name) {
-                var data = ls.getData(_data.VERSION, name, _data.keys);
+                var data = ls.getData(_data.VERSION, name);
 
                 if (data) {
                     return data.data;
@@ -118,7 +104,7 @@ var localstorage = (function () {
 
             set: function (name, data) {
                 if (typeof _data.VERSION !== "undefined") {
-                    ls.setData(_data.VERSION, name, data, _data.expires, _data.keys);
+                    ls.setData(_data.VERSION, name, data, _data.expires);
 
                     // if the expires attribute was not set as a global, then
                     // make sure to return it back to Infinity to not impose
@@ -139,7 +125,7 @@ var localstorage = (function () {
             },
 
             migrate: function (name, v1, v2, callback) {
-                return ls.migrate(name, v1, v2, _data.keys, callback);
+                return ls.migrate(name, v1, v2, callback);
             }
         };
 
