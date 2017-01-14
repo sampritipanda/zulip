@@ -384,15 +384,15 @@ function render(template_name, args) {
                 stream: 'all',
                 stream_color: '#FF0000',  // rgb(255, 0, 0)
                 topic: 'tests',
-                content: 'Public draft'
+                content: 'Public draft',
             },
             {
                 draft_id: '2',
                 is_stream: false,
                 recipients: 'Jordan, Michael',
-                content: 'Private draft'
-            }
-        ]
+                content: 'Private draft',
+            },
+        ],
     };
 
     var html = '';

@@ -10,20 +10,20 @@ var draft_model = (function () {
     var ls = localstorage();
     ls.version = 1;
 
-    function getTimestamp () {
+    function getTimestamp() {
         return new Date().getTime();
     }
 
-    function get () {
+    function get() {
         return ls.get(KEY) || {};
     }
     exports.get = get;
 
     exports.getDraft = function (id) {
         return get()[id] || false;
-    }
+    };
 
-    function save (drafts) {
+    function save(drafts) {
         ls.set(KEY, drafts);
     }
 
@@ -39,7 +39,7 @@ var draft_model = (function () {
         save(drafts);
 
         return id;
-    }
+    };
 
     exports.editDraft = function (id, draft) {
         var drafts = get();
@@ -49,14 +49,14 @@ var draft_model = (function () {
             drafts[id] = draft;
             save(drafts);
         }
-    }
+    };
 
     exports.deleteDraft = function (id) {
         var drafts = get();
 
         delete drafts[id];
         save(drafts);
-    }
+    };
 
     return exports;
 }());
@@ -159,7 +159,7 @@ exports.setup_page = function (callback) {
                     stream: stream,
                     stream_color: stream_data.get_color(draft.stream),
                     topic: draft.subject,
-                    content: echo.apply_markdown(draft.content)
+                    content: echo.apply_markdown(draft.content),
                 };
             } else {
                 var emails = util.extract_pm_recipients(draft.private_message_recipient);
@@ -176,7 +176,7 @@ exports.setup_page = function (callback) {
                     draft_id: id,
                     is_stream: false,
                     recipients: recipients,
-                    content: echo.apply_markdown(draft.content)
+                    content: echo.apply_markdown(draft.content),
                 };
             }
             return formatted;

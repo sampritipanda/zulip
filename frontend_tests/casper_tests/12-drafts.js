@@ -64,11 +64,11 @@ casper.then(function () {
 
         casper.test.assertSelectorHasText('.draft-row .message_header_stream .stream_label', 'all');
         casper.test.assertSelectorHasText('.draft-row .message_header_stream .stream_topic', 'tests');
-        casper.test.assertTextExists('Test Stream Message', 'Stream draft contains message content')
+        casper.test.assertTextExists('Test Stream Message', 'Stream draft contains message content');
 
         casper.test.assertSelectorHasText('.draft-row .message_header_private_message .stream_label',
                                           'You and Cordelia Lear, King Hamlet');
-        casper.test.assertTextExists('Test Private Message', 'Private draft contains message content')
+        casper.test.assertTextExists('Test Private Message', 'Private draft contains message content');
     });
 });
 
@@ -85,7 +85,7 @@ casper.then(function () {
     });
 });
 
-casper.then(function() {
+casper.then(function () {
     casper.test.info('Editing Stream Message Draft');
     casper.fill('form#send_message_form', {
       stream: 'all',
@@ -105,7 +105,7 @@ casper.then(function () {
     casper.waitUntilVisible('#draft_overlay', function () {
         casper.test.assertSelectorHasText('.draft-row .message_header_stream .stream_label', 'all');
         casper.test.assertSelectorHasText('.draft-row .message_header_stream .stream_topic', 'tests');
-        casper.test.assertTextExists('Updated Stream Message', 'Stream draft contains message content')
+        casper.test.assertTextExists('Updated Stream Message', 'Stream draft contains message content');
     });
 });
 
@@ -159,7 +159,7 @@ casper.then(function () {
         casper.test.assertElementCount('.draft-row', 2, 'Drafts loaded');
         casper.test.assertSelectorHasText('.draft-row .message_header_private_message .stream_label',
                                           'You and Cordelia Lear');
-        casper.test.assertTextExists('Test Private Message')
+        casper.test.assertTextExists('Test Private Message');
     });
 });
 

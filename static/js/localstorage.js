@@ -25,7 +25,7 @@ var localstorage = (function () {
             return {
                 data: data,
                 __valid: true,
-                expires: new Date().getTime() + expires
+                expires: new Date().getTime() + expires,
             };
         },
 
@@ -72,7 +72,7 @@ var localstorage = (function () {
 
                 return data;
             }
-        }
+        },
     };
 
     // return a new function instance that has instance-scoped variables.
@@ -126,7 +126,7 @@ var localstorage = (function () {
 
             migrate: function (name, v1, v2, callback) {
                 return ls.migrate(name, v1, v2, callback);
-            }
+            },
         };
 
         // set a new master version for the LocalStorage instance.
@@ -138,7 +138,7 @@ var localstorage = (function () {
                 _data.VERSION = version;
 
                 return prototype;
-            }
+            },
         });
 
         return prototype;
