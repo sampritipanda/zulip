@@ -10,10 +10,8 @@ var draft_model = (function () {
     var ls = localstorage();
     ls.version = 1;
 
-    function createKey () {
-        // use the base16 of the current time + a random string to reduce
-        // collisions to essentially zero.
-        return new Date().getTime().toString(16) + "-" + Math.random().toString(16).split(/\./).pop();
+    function getTimestamp () {
+        return new Date().getTime();
     }
 
     function get () {
@@ -32,8 +30,11 @@ var draft_model = (function () {
     exports.addDraft = function (draft) {
         var drafts = get();
 
-        var id = createKey();
-        draft.updatedAt = new Date().getTime();
+        // use the base16 of the current time + a random string to reduce
+        // collisions to essentially zero.
+        var id = getTimestamp().toString(16) + "-" + Math.random().toString(16).split(/\./).pop();
+
+        draft.updatedAt = getTimestamp();
         drafts[id] = draft;
         save(drafts);
 
@@ -44,7 +45,7 @@ var draft_model = (function () {
         var drafts = get();
 
         if (drafts[id]) {
-            draft.updatedAt = new Date().getTime();
+            draft.updatedAt = getTimestamp();
             drafts[id] = draft;
             save(drafts);
         }

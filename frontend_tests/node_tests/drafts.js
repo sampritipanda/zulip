@@ -19,13 +19,13 @@ set_global('localStorage', {
     }
 });
 
-function stub_timestamp (timestamp, func) {
-    var original_func = Date.prototype.getTime;
-    Date.prototype.getTime = function () {
+function stub_timestamp (model, timestamp, func) {
+    var original_func = model.getTimestamp;
+    model.getTimestamp = function () {
         return timestamp;
     };
     func();
-    Date.prototype.getTime = original_func;
+    model.getTimestamp = original_func;
 }
 
 var draft_1 = {
@@ -62,7 +62,7 @@ var draft_2 = {
 
     localStorage.clear();
     (function test_addDraft() {
-         stub_timestamp(1, function() {
+         stub_timestamp(draft_model, 1, function() {
              var expected = draft_1;
              expected.updatedAt = 1;
              var id = draft_model.addDraft(draft_1);
@@ -73,7 +73,7 @@ var draft_2 = {
 
     localStorage.clear();
     (function test_editDraft() {
-         stub_timestamp(2, function() {
+         stub_timestamp(draft_model, 2, function() {
              ls.set("drafts", { id1: draft_1 } );
              var expected = draft_2;
              expected.updatedAt = 2;
