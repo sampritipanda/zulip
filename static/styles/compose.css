@@ -11,6 +11,12 @@
     width: 10px;
 }
 
+#compose_controls .drafts-link {
+    position: absolute;
+    left: 10px;
+    bottom: 5px;
+}
+
 .new_message_button {
     padding-top: 1.1em;
 }
@@ -355,7 +361,7 @@ input.recipient_box {
     display: none;
 }
 
-#drafts-link {
+.compose_table .drafts-link {
     position: relative;
     margin-right: 1em;
     margin-left: 5px;
