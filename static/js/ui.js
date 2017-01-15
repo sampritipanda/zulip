@@ -542,7 +542,6 @@ $(function () {
 
     $('.message_failed i[data-toggle="tooltip"]').tooltip();
 
-
     if (!page_params.realm_allow_message_editing) {
         $("#edit-message-hotkey-help").hide();
     }

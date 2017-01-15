@@ -198,7 +198,7 @@ function process_hotkey(e) {
         } else if ($("#subscription_overlay").is(":visible")) {
             $("#subscription_overlay").click();
             return true;
-        } else if ($("#draft_overlay").css("display") === "block") {
+        } else if ($("#draft_overlay").is(":visible")) {
             $("#draft_overlay").click();
             return true;
         }
