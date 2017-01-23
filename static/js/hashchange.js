@@ -16,6 +16,13 @@ exports.encodeHashComponent = function (str) {
 };
 
 exports.encode_operand = function (operator, operand) {
+    if ((operator === 'pm-with') || (operator === 'sender')) {
+        var slug = people.emails_to_slug(operand);
+        if (slug) {
+            return slug;
+        }
+    }
+
     return exports.encodeHashComponent(operand);
 };
 
@@ -24,6 +31,13 @@ function decodeHashComponent(str) {
 }
 
 exports.decode_operand = function (operator, operand) {
+    if ((operator === 'pm-with') || (operator === 'sender')) {
+        var emails = people.slug_to_emails(operand);
+        if (emails) {
+            return emails;
+        }
+    }
+
     return decodeHashComponent(operand);
 };
 
@@ -214,7 +228,7 @@ function should_ignore(hash) {
 }
 
 function hide_overlays() {
-    $("#subscription_overlay").fadeOut(500);
+    subs.close();
     $("#draft_overlay").fadeOut(500);
 }
 

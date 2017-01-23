@@ -32,7 +32,7 @@ as an **organization**.
 * [Join a Zulip organization](/help/join-a-zulip-organization)
 * [Signing in](/help/signing-in)
 * [Signing out](/help/signing-out)
-* Find your Zulip organization (not implemented)
+* Find your Zulip organization
 * Set up two-factor authentication (not implemented)
 * [Deactivate your account](/help/deactivate-your-account)
 
@@ -55,7 +55,7 @@ as an **organization**.
   note that you can't @mention when editing messages, since they may
   have already read the message / not clear how to notif them)
 * [Make an announcement](/help/make-an-announcement)
-* Send a message in a different language
+* [Send a message in a different language](/help/send-a-message-in-a-different-language)
 * [Reply to a message](/help/reply-to-a-message)
 ### Reading
 * [View the Markdown source of a message](/help/view-the-markdown-source-of-a-message)
@@ -92,13 +92,10 @@ as an **organization**.
 * Preview a stream (not implemented)
 * [Unsubscribe from a stream](/help/unsubscribe-from-a-stream)
 * [Change who can join a stream](/help/change-who-can-join-a-stream)
+* [Organize the Streams sidebar](/help/organize-the-streams-sidebar)
 * [Pin a stream](/help/pin-a-stream)
 * [Change the color of a stream](/help/change-the-color-of-a-stream)
 * [Message a stream by email](/help/message-a-stream-by-email)
-* Convert a group PM to a private stream (not implemented)
-* [Remove someone from a stream (admin only)](/help/remove-someone-from-a-stream)
-* [Delete a stream (admin only)](/help/delete-a-stream)
-* [Organize the streams sidebar](/help/organize-the-streams-sidebar)
 
 ## Notifications
 * [Mute a stream](/help/mute-a-stream)
@@ -144,7 +141,7 @@ as an **organization**.
 * [Deactivate or reactivate a bot](/help/deactivate-or-reactivate-a-bot)
 * [Make a user an administrator](/help/make-a-user-an-administrator)
 * [Change a user's name](/help/change-a-users-name)
-* [View all bots in your organization (admin only)](/help/view-all-bots-in-your-organization)
+* [View all bots in your organization](/help/view-all-bots-in-your-organization)
 
 ## Streams
 * [Delete a stream](/help/delete-a-stream)

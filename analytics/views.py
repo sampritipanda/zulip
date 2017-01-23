@@ -2,6 +2,7 @@ from __future__ import absolute_import, division
 
 from django.core import urlresolvers
 from django.db import connection
+from django.db.models import Sum
 from django.db.models.query import QuerySet
 from django.http import HttpResponseNotFound, HttpRequest, HttpResponse
 from django.template import RequestContext, loader
@@ -11,14 +12,16 @@ from jinja2 import Markup as mark_safe
 
 from analytics.lib.counts import CountStat, process_count_stat, COUNT_STATS
 from analytics.lib.time_utils import time_range
-from analytics.models import RealmCount, UserCount
+from analytics.models import BaseCount, InstallationCount, RealmCount, \
+    UserCount, StreamCount
 
 from zerver.decorator import has_request_variables, REQ, zulip_internal, \
     zulip_login_required, to_non_negative_int, to_utc_datetime
 from zerver.lib.request import JsonableError
 from zerver.lib.response import json_success
 from zerver.lib.timestamp import ceiling_to_hour, ceiling_to_day, timestamp_to_datetime
-from zerver.models import Realm, UserProfile, UserActivity, UserActivityInterval
+from zerver.models import Realm, UserProfile, UserActivity, \
+    UserActivityInterval, Client
 from zproject.jinja2 import render_to_response
 
 from collections import defaultdict
@@ -30,7 +33,8 @@ import re
 import time
 
 from six.moves import filter, map, range, zip
-from typing import Any, Dict, List, Tuple, Optional, Sequence, Callable, Union, Text
+from typing import Any, Dict, List, Tuple, Optional, Sequence, Callable, Type, \
+    Union, Text
 
 @zulip_login_required
 def stats(request):
@@ -44,14 +48,6 @@ def get_chart_data(request, user_profile, chart_name=REQ(),
                    end=REQ(converter=to_utc_datetime, default=None)):
     # type: (HttpRequest, UserProfile, Text, Optional[int], Optional[datetime], Optional[datetime]) -> HttpResponse
     realm = user_profile.realm
-    if chart_name == 'messages_sent_to_realm':
-        data = get_messages_sent_to_realm(realm, min_length=min_length, start=start, end=end)
-    else:
-        raise JsonableError(_("Unknown chart name: %s") % (chart_name,))
-    return json_success(data=data)
-
-def get_messages_sent_to_realm(realm, min_length=None, start=None, end=None):
-    # type: (Realm, Optional[int], Optional[datetime], Optional[datetime]) -> Dict[str, Any]
     # These are implicitly relying on realm.date_created and timezone.now being in UTC.
     if start is None:
         start = realm.date_created
@@ -60,24 +56,76 @@ def get_messages_sent_to_realm(realm, min_length=None, start=None, end=None):
     if start > end:
         raise JsonableError(_("Start time is later than end time. Start: %(start)s, End: %(end)s") %
                             {'start': start, 'end': end})
-    frequency = CountStat.DAY
-    end_times = time_range(start, end, frequency, min_length)
-    indices = {}
-    for i, end_time in enumerate(end_times):
-        indices[end_time] = i
 
-    filter_set = RealmCount.objects.filter(
-        realm=realm, property='messages_sent:is_bot', interval=frequency) \
-        .values_list('end_time', 'value')
-    humans = [0]*len(end_times)
-    for end_time, value in filter_set.filter(subgroup='false'):
-        humans[indices[end_time]] = value
-    bots = [0]*len(end_times)
-    for end_time, value in filter_set.filter(subgroup='true'):
-        bots[indices[end_time]] = value
+    if chart_name == 'number_of_humans':
+        stat = COUNT_STATS['active_users:is_bot:day']
+        tables = [RealmCount]
+        subgroups = ['false', 'true']
+        labels = ['human', 'bot']
+        include_empty_subgroups = True
+    elif chart_name == 'messages_sent_by_humans_and_bots':
+        stat = COUNT_STATS['messages_sent:is_bot:hour']
+        tables = [RealmCount]
+        subgroups = ['false', 'true']
+        labels = ['human', 'bot']
+        include_empty_subgroups = True
+    elif chart_name == 'messages_sent_by_message_type':
+        stat = COUNT_STATS['messages_sent:message_type:day']
+        tables = [RealmCount, UserCount]
+        subgroups = ['public_stream', 'private_stream', 'private_message']
+        labels = None
+        include_empty_subgroups = True
+    elif chart_name == 'messages_sent_by_client':
+        stat = COUNT_STATS['messages_sent:client:day']
+        tables = [RealmCount, UserCount]
+        subgroups = [str(x) for x in Client.objects.values_list('id', flat=True).order_by('id')]
+        labels = list(Client.objects.values_list('name', flat=True).order_by('id'))
+        include_empty_subgroups = False
+    else:
+        raise JsonableError(_("Unknown chart name: %s") % (chart_name,))
 
-    return {'end_times': end_times, 'humans': humans, 'bots': bots,
-            'frequency': frequency, 'interval': frequency}
+    end_times = time_range(start, end, stat.frequency, min_length)
+    data = {'end_times': end_times, 'frequency': stat.frequency, 'interval': stat.interval}
+    for table in tables:
+        if table == RealmCount:
+            data['realm'] = get_time_series_by_subgroup(
+                stat, RealmCount, realm.id, end_times, subgroups, labels, include_empty_subgroups)
+        if table == UserCount:
+            data['user'] = get_time_series_by_subgroup(
+                stat, UserCount, user_profile.id, end_times, subgroups, labels, include_empty_subgroups)
+    return json_success(data=data)
+
+def table_filtered_to_id(table, key_id):
+    # type: (Type[BaseCount], int) -> QuerySet
+    if table == RealmCount:
+        return RealmCount.objects.filter(realm_id=key_id)
+    elif table == UserCount:
+        return UserCount.objects.filter(user_id=key_id)
+    elif table == StreamCount:
+        return StreamCount.objects.filter(stream_id=key_id)
+    elif table == InstallationCount:
+        return InstallationCount.objects.all()
+    else:
+        raise ValueError("Unknown table: %s" % (table,))
+
+def get_time_series_by_subgroup(stat, table, key_id, end_times, subgroups, labels, include_empty_subgroups):
+    # type: (CountStat, Type[BaseCount], Optional[int], List[datetime], List[str], Optional[List[str]], bool) -> Dict[str, List[int]]
+    if labels is None:
+        labels = subgroups
+    if len(subgroups) != len(labels):
+        raise ValueError("subgroups and labels have lengths %s and %s, which are different." %
+                         (len(subgroups), len(labels)))
+    queryset = table_filtered_to_id(table, key_id).filter(property=stat.property) \
+                                                  .values_list('subgroup', 'end_time', 'value')
+    value_dicts = defaultdict(lambda: defaultdict(int)) # type: Dict[Optional[str], Dict[datetime, int]]
+    for subgroup, end_time, value in queryset:
+        value_dicts[subgroup][end_time] = value
+    value_arrays = {}
+    for subgroup, label in zip(subgroups, labels):
+        if (subgroup in value_dicts) or include_empty_subgroups:
+            value_arrays[label] = [value_dicts[subgroup][end_time] for end_time in end_times]
+    return value_arrays
+
 
 eastern_tz = pytz.timezone('US/Eastern')
 

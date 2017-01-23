@@ -16,6 +16,22 @@ function MessageListView(list, table_name, collapse_messages) {
 
 (function () {
 
+function mention_button_refers_to_me(elem) {
+    var user_id = $(elem).attr('data-user-id');
+    if ((user_id === '*') || people.is_my_user_id(user_id)) {
+        return true;
+    }
+
+    // Handle legacy markdown that was rendered before we cut
+    // over to using data-user-id.
+    var email = $(elem).attr('data-user-email');
+    if (email === '*' || people.is_current_user(email)) {
+        return true;
+    }
+
+    return false;
+}
+
 function stringify_time(time) {
     if (page_params.twenty_four_hour_time) {
         return time.toString('HH:mm');
@@ -207,7 +223,7 @@ MessageListView.prototype = {
 
             self._add_msg_timestring(message_container);
 
-            message_container.small_avatar_url = ui.small_avatar_url(message_container.msg);
+            message_container.small_avatar_url = people.small_avatar_url(message_container.msg);
             if (message_container.msg.stream !== undefined) {
                 message_container.background_color =
                     stream_data.get_color(message_container.msg.stream);
@@ -362,8 +378,9 @@ MessageListView.prototype = {
 
             if (row.hasClass('mention')) {
                 row.find('.user-mention').each(function () {
-                    var email = $(this).attr('data-user-email');
-                    if (email === '*' || util.is_current_user(email)) {
+                    // We give special highlights to the mention buttons
+                    // that refer to the current user.
+                    if (mention_button_refers_to_me(this)) {
                         $(this).addClass('user-mention-me');
                     }
                 });
@@ -600,7 +617,7 @@ MessageListView.prototype = {
                 var row_id = rows.id(elem);
                 // check for `row_id` NaN in case we're looking at a date row or bookend row
                 if (row_id > -1 &&
-                    util.is_current_user(this.get_message(row_id).sender_email)) {
+                    people.is_current_user(this.get_message(row_id).sender_email)) {
                     id_of_last_message_sent_by_us = rows.id(elem);
                 }
             }

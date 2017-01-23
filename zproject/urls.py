@@ -132,11 +132,11 @@ i18n_urls = [
     url(r'^robots\.txt$', RedirectView.as_view(url='/static/robots.txt', permanent=True)),
 
     # Landing page, features pages, signup form, etc.
-    url(r'^hello/$', TemplateView.as_view(template_name='zerver/hello.html'),
-        name='landing-page'),
+    url(r'^hello/$', TemplateView.as_view(template_name='zerver/hello.html'), name='landing-page'),
     url(r'^new-user/$', RedirectView.as_view(url='/hello', permanent=True)),
     url(r'^features/$', TemplateView.as_view(template_name='zerver/features.html')),
     url(r'^find_my_team/$', zerver.views.registration.find_my_team, name='zerver.views.registration.find_my_team'),
+    url(r'^authors/$', zerver.views.users.authors_view, name='zerver.views.users.authors_view')
 ]
 
 # If a Terms of Service is supplied, add that route
@@ -173,10 +173,10 @@ v1_api_and_json_patterns = [
 
     # realm/emoji -> zerver.views.realm_emoji
     url(r'^realm/emoji$', rest_dispatch,
-        {'GET': 'zerver.views.realm_emoji.list_emoji',
-         'PUT': 'zerver.views.realm_emoji.upload_emoji'}),
-    url(r'^realm/emoji/(?P<emoji_name>[0-9a-zA-Z.\-_]+(?<![.\-_]))$', rest_dispatch,
-        {'DELETE': 'zerver.views.realm_emoji.delete_emoji'}),
+        {'GET': 'zerver.views.realm_emoji.list_emoji'}),
+    url(r'^realm/emoji/(?P<emoji_name>.*)$', rest_dispatch,
+        {'PUT': 'zerver.views.realm_emoji.upload_emoji',
+         'DELETE': 'zerver.views.realm_emoji.delete_emoji'}),
 
     # realm/filters -> zerver.views.realm_filters
     url(r'^realm/filters$', rest_dispatch,
@@ -213,14 +213,14 @@ v1_api_and_json_patterns = [
         {'GET': 'zerver.views.messages.json_fetch_raw_message',
          'PATCH': 'zerver.views.messages.json_update_message'}),
     url(r'^messages/render$', rest_dispatch,
-        {'GET': 'zerver.views.messages.render_message_backend'}),
+        {'POST': 'zerver.views.messages.render_message_backend'}),
     url(r'^messages/flags$', rest_dispatch,
         {'POST': 'zerver.views.messages.update_message_flags'}),
 
     # reactions -> zerver.view.reactions
     # PUT adds a reaction to a message
     # DELETE removes a reaction from a message
-    url(r'^messages/(?P<message_id>[0-9]+)/emoji_reactions/(?P<emoji_name>[+0-9a-zA-Z.\-_]+(?<![.\-_]))$',
+    url(r'^messages/(?P<message_id>[0-9]+)/emoji_reactions/(?P<emoji_name>.*)$',
         rest_dispatch,
         {'PUT': 'zerver.views.reactions.add_reaction_backend',
          'DELETE': 'zerver.views.reactions.remove_reaction_backend'}),
@@ -384,7 +384,7 @@ urls += [
 ]
 
 # Python Social Auth
-urls += [url(r'^', include('social.apps.django_app.urls', namespace='social'))]
+urls += [url(r'^', include('social_django.urls', namespace='social'))]
 
 # User documentation site
 urls += [url(r'^help/(?P<article>.*)$', HelpView.as_view(template_name='zerver/help/main.html'))]

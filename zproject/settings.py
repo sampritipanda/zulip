@@ -192,7 +192,7 @@ DEFAULT_SETTINGS = {'TWITTER_CONSUMER_KEY': '',
                     'ENABLE_FILE_LINKS': False,
                     'USE_WEBSOCKETS': True,
                     'PASSWORD_MIN_LENGTH': 6,
-                    'PASSWORD_MIN_ZXCVBN_QUALITY': 0.4,
+                    'PASSWORD_MIN_ZXCVBN_QUALITY': 0.5,
                     }
 
 for setting_name, setting_val in six.iteritems(DEFAULT_SETTINGS):
@@ -350,7 +350,7 @@ INSTALLED_APPS = [
     'guardian',
     'pipeline',
     'zerver',
-    'social.apps.django_app.default',
+    'social_django',
 ]
 if USING_PGROONGA:
     INSTALLED_APPS += ['pgroonga']
@@ -729,28 +729,28 @@ PIPELINE = {
 
 JS_SPECS = {
     'common': {
-        'source_filenames': (
+        'source_filenames': [
             'node_modules/jquery/dist/jquery.js',
-            'third/underscore/underscore.js',
+            'node_modules/underscore/underscore.js',
             'js/blueslip.js',
             'third/bootstrap/js/bootstrap.js',
             'js/common.js',
-            ),
+            ],
         'output_filename':  'min/common.js'
     },
     'signup': {
-        'source_filenames': (
+        'source_filenames': [
             'js/portico/signup.js',
             'node_modules/jquery-validation/dist/jquery.validate.js',
-            ),
+            ],
         'output_filename':  'min/signup.js'
     },
     'api': {
-        'source_filenames': ('js/portico/api.js',),
+        'source_filenames': ['js/portico/api.js'],
         'output_filename':  'min/api.js'
     },
     'app_debug': {
-        'source_filenames': ('js/debug.js',),
+        'source_filenames': ['js/debug.js'],
         'output_filename':  'min/app_debug.js'
     },
     'app': {
@@ -761,17 +761,17 @@ JS_SPECS = {
             'third/jquery-form/jquery.form.js',
             'third/jquery-filedrop/jquery.filedrop.js',
             'third/jquery-caret/jquery.caret.1.5.2.js',
-            'third/xdate/xdate.dev.js',
-            'third/jquery-mousewheel/jquery.mousewheel.js',
+            'node_modules/xdate/src/xdate.js',
+            'node_modules/jquery-mousewheel/jquery.mousewheel.js',
             'third/jquery-throttle-debounce/jquery.ba-throttle-debounce.js',
             'third/jquery-idle/jquery.idle.js',
             'third/jquery-autosize/jquery.autosize.js',
             'third/jquery-perfect-scrollbar/js/perfect-scrollbar.js',
             'third/lazyload/lazyload.js',
             'third/spectrum/spectrum.js',
-            'third/string-prototype-codepointat/codepointat.js',
-            'third/winchan/winchan.js',
             'third/sockjs/sockjs-0.3.4.js',
+            'node_modules/string.prototype.codepointat/codepointat.js',
+            'node_modules/winchan/winchan.js',
             'third/handlebars/handlebars.runtime.js',
             'third/marked/lib/marked.js',
             'templates/compiled.js',
@@ -837,6 +837,7 @@ JS_SPECS = {
             'js/server_events.js',
             'js/zulip.js',
             'js/activity.js',
+            'js/user_events.js',
             'js/colorspace.js',
             'js/timerender.js',
             'js/tutorial.js',
@@ -854,22 +855,24 @@ JS_SPECS = {
         'output_filename': 'min/app.js'
     },
     'activity': {
-        'source_filenames': (
+        'source_filenames': [
             'third/sorttable/sorttable.js',
-        ),
+        ],
         'output_filename': 'min/activity.js'
     },
     'stats': {
-        'source_filenames': (
-            'node_modules/plotly.js/dist/plotly.js',
+        'source_filenames': [
             'node_modules/jquery/dist/jquery.js',
             'js/portico/stats.js'
-        ),
+        ],
+        'minifed_source_filenames': [
+            'node_modules/plotly.js/dist/plotly.min.js',
+        ],
         'output_filename': 'min/stats.js'
     },
     # We also want to minify sockjs separately for the sockjs iframe transport
     'sockjs': {
-        'source_filenames': ('third/sockjs/sockjs-0.3.4.js',),
+        'source_filenames': ['third/sockjs/sockjs-0.3.4.js'],
         'output_filename': 'min/sockjs-0.3.4.min.js'
     },
 }
@@ -1106,3 +1109,5 @@ if PRODUCTION:
 PROFILE_ALL_REQUESTS = False
 
 CROSS_REALM_BOT_EMAILS = set(('feedback@zulip.com', 'notification-bot@zulip.com'))
+
+CONTRIBUTORS_DATA = os.path.join(STATIC_ROOT, 'generated/github-contributors.json')

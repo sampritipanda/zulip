@@ -1,13 +1,14 @@
 # Add a custom linkification filter
 
-If you are an administrator of a Zulip organization, you can add custom
-linkification filters to your organization that automatically turn phrases in
-messages into links to other pages.
+{!admin-only.md!}
+
+You can add custom linkification filters to your organization that
+automatically turn phrases in messages into links to other pages.
 
 {!go-to-the.md!} [Filter Settings](/#administration/filter-settings)
 {!admin.md!}
 
-5. In the green section labeled **Add a New Filter**, find the **Regular expression**
+5. In the green section labeled **Add a new filter**, find the **Regular expression**
 and **URL format string** fields.
 
     * In the **Regular expression** field, enter a
@@ -43,7 +44,7 @@ filter to your organization.
 
     ![Custom linkification filter success](/static/images/help/custom-filter-success.png)
 
-    The filter's information and settings will also be displayed above the **Add a New Filter**
+    The filter's information and settings will also be displayed above the **Add a new filter**
 section. You can choose to delete any custom linkification filters in your
 organization through this panel by pressing the **Delete** button next to
 the filter you want to delete.

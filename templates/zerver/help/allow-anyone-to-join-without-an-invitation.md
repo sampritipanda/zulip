@@ -1,5 +1,7 @@
 # Allow anyone to join without an invitation
 
+{!admin-only.md!}
+
 By default, new users can join a Zulip organization with or without an email
 invitation.
 
@@ -24,6 +26,4 @@ organization to join your organization.
     [only allow administrators](/help/only-allow-admins-to-invite-new-users) in
     your organization to send email invitations to new users.
 
-5. To save any changes you have made to your organization settings, click the
-**Save changes** button at the bottom of the **Organizations settings**
-section.
+{!save-changes.md!} organization settings.

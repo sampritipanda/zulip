@@ -221,7 +221,7 @@ exports.window_has_focus = function () {
 
 function in_browser_notify(message, title, content, raw_operators, opts) {
     var notification_html = $(templates.render('notification', {
-        gravatar_url: ui.small_avatar_url(message),
+        gravatar_url: people.small_avatar_url(message),
         title: title,
         content: content,
         message_id: message.id,
@@ -340,7 +340,7 @@ function process_notification(notification) {
     }
 
     if (window.bridge === undefined && notification.webkit_notify === true) {
-        var icon_url = ui.small_avatar_url(message);
+        var icon_url = people.small_avatar_url(message);
         notice_memory[key] = {
             obj: notifications_api.createNotification(
                     icon_url, title, content, message.id),
@@ -364,7 +364,7 @@ function process_notification(notification) {
             if (perm === 'granted') {
                 notification_object = new Notification(title, {
                     body: content,
-                    iconUrl: ui.small_avatar_url(message),
+                    iconUrl: people.small_avatar_url(message),
                     tag: message.id,
                 });
             } else {
@@ -522,7 +522,7 @@ function get_message_header(message) {
     if (message.display_recipient.length > 2) {
         return "group PM with " + message.display_reply_to;
     }
-    if (util.is_current_user(message.reply_to)) {
+    if (people.is_current_user(message.reply_to)) {
         return "PM with yourself";
     }
     return "PM with " + message.display_reply_to;
@@ -532,7 +532,7 @@ exports.possibly_notify_new_messages_outside_viewport = function (messages, loca
     _.each(messages, function (message) {
         // A warning should only be displayed when the message was sent by the user and
         // this is the tab he sent it in.
-        if (!util.is_current_user(message.sender_email) ||
+        if (!people.is_current_user(message.sender_email) ||
             local_id === undefined) {
             return;
         }
@@ -570,7 +570,7 @@ exports.possibly_notify_new_messages_outside_viewport = function (messages, loca
 // the current_msg_list (!can_apply_locally; a.k.a. "a search").
 exports.notify_messages_outside_current_search = function (messages) {
     _.each(messages, function (message) {
-        if (!util.is_current_user(message.sender_email)) {
+        if (!people.is_current_user(message.sender_email)) {
             return;
         }
         exports.notify_above_composebox("Sent! Your recent message is outside the current search.",

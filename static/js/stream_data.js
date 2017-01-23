@@ -30,9 +30,15 @@ exports.rename_sub = function (stream_id, new_name) {
     return sub;
 };
 
+exports.subscribe_myself = function (sub) {
+    var user_id = people.my_current_user_id();
+    exports.add_subscriber(sub.name, user_id);
+    sub.subscribed = true;
+};
+
 exports.unsubscribe_myself = function (sub) {
     // Remove user from subscriber's list
-    var user_id = people.get_user_id(page_params.email);
+    var user_id = people.my_current_user_id();
     exports.remove_subscriber(sub.name, user_id);
     sub.subscribed = false;
 };
@@ -369,6 +375,17 @@ exports.get_recent_topics = function (stream_name) {
 exports.populate_stream_topics_for_tests = function (stream_map) {
     // This is only used by tests.
     recent_topics = Dict.from(stream_map, {fold_case: true});
+};
+
+exports.get_newbie_stream = function () {
+    // This is the stream that we narrow folks to after the tutorial.
+
+    if (exports.is_subscribed("new members")) {
+        return "new members";
+    } else if (exports.in_home_view(page_params.notifications_stream)) {
+        return page_params.notifications_stream;
+    }
+    return undefined;
 };
 
 return exports;

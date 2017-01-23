@@ -255,8 +255,7 @@ $(function () {
         }
 
         if ($(e.target).is(".exit, .exit-sign, #subscription_overlay, #subscription_overlay > .flex")) {
-            $("#subscription_overlay").fadeOut(500);
-            subs.remove_miscategorized_streams();
+            subs.close();
 
             hashchange.exit_settings();
         }
@@ -278,7 +277,7 @@ $(function () {
     // HOME
 
     // Capture both the left-sidebar Home click and the tab breadcrumb Home
-    $(document).on('click', "li[data-name='home']", function (e) {
+    $(document).on('click', ".home-link[data-name='home']", function (e) {
         ui.change_tab_to('#home');
         narrow.deactivate();
         // We need to maybe scroll to the selected message
@@ -370,7 +369,7 @@ $(function () {
 
     $("#join_unsub_stream").click(function () {
         subs.launch();
-        components.toggle.lookup("stream-filter-toggle").goto("All Streams");
+        components.toggle.lookup("stream-filter-toggle").goto("All streams");
     });
 
     // FEEDBACK

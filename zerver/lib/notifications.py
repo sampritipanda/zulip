@@ -98,7 +98,7 @@ def build_message_list(user_profile, messages):
         # structure of the URL to leverage.
         content = re.sub(
             r"/user_uploads/(\S*)",
-            settings.EXTERNAL_HOST + r"/user_uploads/\1", content)
+            user_profile.realm.uri + r"/user_uploads/\1", content)
 
         # Our proxying user-uploaded images seems to break inline images in HTML
         # emails, so scrub the image but leave the link.
@@ -108,8 +108,8 @@ def build_message_list(user_profile, messages):
         # URLs for emoji are of the form
         # "static/generated/emoji/images/emoji/snowflake.png".
         content = re.sub(
-            r"static/generated/emoji/images/emoji/",
-            settings.EXTERNAL_HOST + r"/static/generated/emoji/images/emoji/",
+            r"/static/generated/emoji/images/emoji/",
+            user_profile.realm.uri + r"/static/generated/emoji/images/emoji/",
             content)
 
         return content
@@ -280,7 +280,7 @@ def do_send_missedmessage_events_reply_in_zulip(user_profile, missed_messages, m
         from_email = '"%s" <%s>' % (sender_str, sender.email)
 
     text_content = loader.render_to_string('zerver/missed_message_email.txt', template_payload)
-    html_content = loader.render_to_string('zerver/missed_message_email_html.txt', template_payload)
+    html_content = loader.render_to_string('zerver/missed_message_email.html', template_payload)
 
     msg = EmailMultiAlternatives(subject, text_content, from_email, [user_profile.email],
                                  headers = headers)

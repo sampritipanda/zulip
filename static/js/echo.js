@@ -30,9 +30,36 @@ exports.contains_bugdown = function contains_bugdown(content) {
     return markedup !== undefined;
 };
 
-exports.apply_markdown = function apply_markdown(content) {
+function push_uniquely(lst, elem) {
+    if (!_.contains(lst, elem)) {
+        lst.push(elem);
+    }
+}
+
+exports.apply_markdown = function apply_markdown(message) {
+    if (message.flags === undefined) {
+        message.flags = [];
+    }
+
     // Our python-markdown processor appends two \n\n to input
-    return marked(content + '\n\n').trim();
+    var options = {
+        userMentionHandler: function (name) {
+            var person = people.get_by_name(name);
+            if (person !== undefined) {
+                push_uniquely(message.flags, 'mentioned');
+                return '<span class="user-mention" data-user-id="' + person.user_id + '">' +
+                       '@' + person.full_name +
+                       '</span>';
+            } else if (name === 'all' || name === 'everyone') {
+                push_uniquely(message.flags, 'mentioned');
+                return '<span class="user-mention" data-user-id="*">' +
+                       '@' + name +
+                       '</span>';
+            }
+            return undefined;
+        },
+    };
+    message.content = marked(message.raw_content + '\n\n', options).trim();
 };
 
 function resend_message(message, row) {
@@ -66,25 +93,13 @@ function truncate_precision(float) {
 }
 
 function add_message_flags(message) {
-    // Locally delivered messages cannot be unread (since we sent them), nor
-    // can they alert the user
-    var flags = ["read"];
-
-    // Messages that mention the sender should highlight as well
-    var self_mention = 'data-user-email="' + page_params.email + '"';
-    var wildcard_mention = 'data-user-email="*"';
-    if (message.content.indexOf(self_mention) > -1 ||
-        message.content.indexOf(wildcard_mention) > -1) {
-        flags.push("mentioned");
-    }
+    // Note: mention flags are set in apply_markdown()
 
     if (message.raw_content.indexOf('/me ') === 0 &&
         message.content.indexOf('<p>') === 0 &&
         message.content.lastIndexOf('</p>') === message.content.length - 4) {
-        flags.push('is_me_message');
+        message.flags.push('is_me_message');
     }
-
-    message.flags = flags;
 }
 
 function add_subject_links(message) {
@@ -130,12 +145,17 @@ function insert_local_message(message_request, local_id) {
     // for zulip.js:add_message
     // Keep this in sync with changes to compose.create_message_object
     var message = $.extend({}, message_request);
+
+    // Locally delivered messages cannot be unread (since we sent them), nor
+    // can they alert the user.
+    message.flags = ['read']; // we may add more flags later
+
     message.raw_content = message.content;
     // NOTE: This will parse synchronously. We're not using the async pipeline
-    message.content = exports.apply_markdown(message.content);
+    exports.apply_markdown(message);
     message.content_type = 'text/html';
-    message.sender_email = page_params.email;
-    message.sender_full_name = page_params.fullname;
+    message.sender_email = people.my_current_email();
+    message.sender_full_name = people.my_full_name();
     message.avatar_url = page_params.avatar_url;
     message.timestamp = new XDate().getTime() / 1000;
     message.local_id = local_id;
@@ -197,7 +217,8 @@ exports.edit_locally = function edit_locally(message, raw_content, new_topic) {
         stream_data.process_message_for_recent_topics(message);
     }
 
-    message.content = exports.apply_markdown(raw_content);
+    exports.apply_markdown(message);
+
     // We don't handle unread counts since local messages must be sent by us
 
     home_msg_list.view.rerender_messages([message]);
@@ -316,17 +337,6 @@ function handleAvatar(email) {
     return '<img alt="' + email + '"' +
            ' class="message_body_gravatar" src="/avatar/' + email + '?s=30"' +
            ' title="' + email + '">';
-}
-
-function handleUserMentions(username) {
-    var person = people.get_by_name(username);
-    if (person !== undefined) {
-        return '<span class="user-mention" data-user-email="' + person.email + '">' +
-                '@' + person.full_name + '</span>';
-    } else if (username === 'all' || username === 'everyone') {
-        return '<span class="user-mention" data-user-email="*">' + '@' + username + '</span>';
-    }
-    return undefined;
 }
 
 function handleStream(streamName) {
@@ -496,7 +506,6 @@ $(function () {
         emojiHandler: handleEmoji,
         avatarHandler: handleAvatar,
         unicodeEmojiHandler: handleUnicodeEmoji,
-        userMentionHandler: handleUserMentions,
         streamHandler: handleStream,
         realmFilterHandler: handleRealmFilter,
         renderer: r,

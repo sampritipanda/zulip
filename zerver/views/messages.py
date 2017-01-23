@@ -542,11 +542,20 @@ def get_old_messages_backend(request, user_profile,
         # Build the query for the narrow
         num_extra_messages = 0
         builder = NarrowBuilder(user_profile, inner_msg_id_col)
+        search_term = None # type: Optional[Dict[str, Any]]
         for term in narrow:
-            if term['operator'] == 'search' and not is_search:
-                query = query.column("subject").column("rendered_content")
-                is_search = True
-            query = builder.add_term(query, term)
+            if term['operator'] == 'search':
+                if not is_search:
+                    search_term = term
+                    query = query.column("subject").column("rendered_content")
+                    is_search = True
+                else:
+                    # Join the search operators if there are multiple of them
+                    search_term['operand'] += ' ' + term['operand']
+            else:
+                query = builder.add_term(query, term)
+        if is_search:
+            query = builder.add_term(query, search_term)
 
     # We add 1 to the number of messages requested if no narrow was
     # specified to ensure that the resulting list always contains the
@@ -922,10 +931,14 @@ def update_message_backend(request, user_profile,
         ums = UserMessage.objects.filter(message=message.id,
                                          flags=~UserMessage.flags.historical)
         message_users = {get_user_profile_by_id(um.user_profile_id) for um in ums}
-        # If rendering fails, the called code will raise a JsonableError.
+        # We render the message using the current user's realm; since
+        # the cross-realm bots never edit messages, this should be
+        # always correct.
+        # Note: If rendering fails, the called code will raise a JsonableError.
         rendered_content = render_incoming_message(message,
-                                                   content=content,
-                                                   message_users=message_users)
+                                                   content,
+                                                   message_users,
+                                                   user_profile.realm)
         links_for_embed |= message.links_for_preview
 
     do_update_message(user_profile, message, subject, propagate_mode, content, rendered_content)
@@ -952,7 +965,7 @@ def render_message_backend(request, user_profile, content=REQ()):
     message.content = content
     message.sending_client = request.client
 
-    rendered_content = render_markdown(message, content, realm_id=user_profile.realm_id)
+    rendered_content = render_markdown(message, content, realm=user_profile.realm)
     return json_success({"rendered": rendered_content})
 
 @authenticated_json_post_view

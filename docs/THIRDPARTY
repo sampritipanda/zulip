@@ -150,10 +150,6 @@ Copyright: 2011-2013 Henrique Boaventura
 License: Expat
 Comment: The software has been modified.
 
-Files: static/third/jquery-mousewheel/jquery.mousewheel.js
-Copyright: 2011 Brandon Aaron
-License: Expat
-
 Files: static/third/jquery-perfect-scrollbar/*
 Copyright: 2012 HyeonJe Jun
 License: Expat
@@ -168,10 +164,6 @@ License: Expat
 
 Files: static/third/marked/*
 Copyright: 2011-2013, Christopher Jeffrey
-License: Expat
-
-Files: static/third/string-prototype-codepointat/*
-Copyright: 2014 Mathias Bynens
 License: Expat
 
 Files: static/third/sockjs/sockjs-0.3.4.js
@@ -189,20 +181,6 @@ License: SIL-OFL-1.1
 
 Files: static/third/spectrum/*
 Copyright: 2013 Brian Grinstead
-License: Expat
-
-Files: static/third/underscore/underscore.js
-Copyright: 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-License: Expat
-Comment: https://github.com/jashkenas/underscore/blob/master/LICENSE
-
-Files: static/third/winchan/*
-Copyright: 2012 Lloyd Hilaiel
-License: Expat
-Comment: https://github.com/mozilla/winchan
-
-Files: static/third/xdate/*
-Copyright: 2010 C. F., Wong
 License: Expat
 
 Files: static/third/zocial/*

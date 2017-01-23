@@ -165,7 +165,14 @@ function _setup_page() {
     }
 
     // Most browsers do not allow filenames to start with `.` without the user manually changing it.
-    var settings_tab = templates.render('settings_tab', {page_params: page_params, zuliprc: 'zuliprc'});
+    // So we use zuliprc, not .zuliprc.
+
+    var settings_tab = templates.render('settings_tab', {
+        full_name: people.my_full_name(),
+        page_params: page_params,
+        zuliprc: 'zuliprc',
+    });
+
     $("#settings").html(settings_tab);
     $("#settings-status").hide();
     $("#notify-settings-status").hide();
@@ -675,6 +682,7 @@ function _setup_page() {
         }
 
         reset_edit_bot.click(function (event) {
+            form.find(".edit_bot_name").val(old_full_name);
             show_row_again();
             $(this).off(event);
         });
@@ -749,7 +757,7 @@ function _setup_page() {
 
     $("#download_zuliprc").on("click", function () {
         $(this).attr("href", settings.generate_zuliprc_uri(
-            page_params.email,
+            people.my_current_email(),
             $("#api_key_value").text()
         ));
     });
@@ -779,7 +787,7 @@ function _setup_page() {
             url: '/json/settings/ui',
             data: labs_updates,
             success: function (resp, statusText, xhr) {
-                var message = i18n.t("Updated __product_name__ Labs settings!  You will need to reload for these changes to take effect.", page_params);
+                var message = i18n.t("Updated settings!  You will need to reload for these changes to take effect.", page_params);
                 var result = JSON.parse(xhr.responseText);
                 var ui_settings_status = $('#ui-settings-status').expectOne();
 

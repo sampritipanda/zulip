@@ -3,6 +3,7 @@ var subs = (function () {
 var meta = {
     callbacks: {},
     stream_created: false,
+    is_open: false,
 };
 var exports = {};
 
@@ -384,39 +385,38 @@ exports.mark_subscribed = function (stream_name, attrs) {
         return;
     }
 
-    if (! sub.subscribed) {
-        // Add yourself to a stream we already know about client-side.
-        var color = get_color();
-        exports.set_color(sub.stream_id, color);
-        sub.subscribed = true;
-        if (attrs) {
-            stream_data.set_subscriber_emails(sub, attrs.subscribers);
-        }
-        var settings = settings_for_sub(sub);
-        var button = button_for_sub(sub);
-
-        if (button.length !== 0) {
-            exports.rerender_subscribers_count(sub);
-
-            button.toggleClass("checked");
-            // Add the user to the member list if they're currently
-            // viewing the members of this stream
-            if (sub.render_subscribers && settings.hasClass('in')) {
-                prepend_subscriber(settings,
-                                   page_params.email);
-            }
-        } else {
-            add_sub_to_table(sub);
-        }
-
-        // Display the swatch and subscription settings
-        var sub_row = settings.closest('.stream-row');
-        sub_row.find(".color_swatch").addClass('in');
-        sub_row.find(".regular_subscription_settings").collapse('show');
-    } else {
-        // Already subscribed
+    if (sub.subscribed) {
         return;
     }
+
+    // Add yourself to a stream we already know about client-side.
+    var color = get_color();
+    exports.set_color(sub.stream_id, color);
+    stream_data.subscribe_myself(sub);
+    if (attrs) {
+        stream_data.set_subscriber_emails(sub, attrs.subscribers);
+    }
+    var settings = settings_for_sub(sub);
+    var button = button_for_sub(sub);
+
+    if (button.length !== 0) {
+        exports.rerender_subscribers_count(sub);
+
+        button.toggleClass("checked");
+        // Add the user to the member list if they're currently
+        // viewing the members of this stream
+        if (sub.render_subscribers && settings.hasClass('in')) {
+            prepend_subscriber(settings,
+                               people.my_current_email());
+        }
+    } else {
+        add_sub_to_table(sub);
+    }
+
+    // Display the swatch and subscription settings
+    var sub_row = settings.closest('.stream-row');
+    sub_row.find(".color_swatch").addClass('in');
+    sub_row.find(".regular_subscription_settings").collapse('show');
 
     if (current_msg_list.narrowed) {
         current_msg_list.update_trailing_bookend();
@@ -544,7 +544,7 @@ exports.setup_page = function (callback) {
             selected: 0,
             values: [
                 { label: "Subscribed" },
-                { label: "All Streams" },
+                { label: "All streams" },
             ],
             callback: function () {
                 actually_filter_streams();
@@ -556,7 +556,7 @@ exports.setup_page = function (callback) {
             $("#subscriptions_table .search-container").prepend(stream_filter_toggle);
         }
 
-        // show the "Stream Settings" header by default.
+        // show the "Stream settings" header by default.
         $(".display-type #stream_settings_title").show();
     }
 
@@ -629,9 +629,23 @@ exports.onlaunchtrigger = function () {
 };
 
 exports.launch = function () {
+    meta.is_open = true;
     exports.setup_page(function () {
         $("#subscription_overlay").fadeIn(300);
     });
+};
+
+Object.defineProperty(exports, "is_open", {
+    get: function () {
+        return meta.is_open;
+    },
+    enumerable: false,
+});
+
+exports.close = function () {
+    meta.is_open = false;
+    $("#subscription_overlay").fadeOut(500);
+    subs.remove_miscategorized_streams();
 };
 
 exports.update_subscription_properties = function (stream_name, property, value) {
@@ -683,14 +697,16 @@ function ajaxSubscribe(stream) {
         url: "/json/users/me/subscriptions",
         data: {subscriptions: JSON.stringify([{name: stream}]) },
         success: function (resp, statusText, xhr) {
-            $("#create_stream_name").val("");
+            if (subs.is_open) {
+                $("#create_stream_name").val("");
 
-            actually_filter_streams();
+                actually_filter_streams();
+            }
 
             var res = JSON.parse(xhr.responseText);
             if (!$.isEmptyObject(res.already_subscribed)) {
                 // Display the canonical stream capitalization.
-                true_stream_name = res.already_subscribed[page_params.email][0];
+                true_stream_name = res.already_subscribed[people.my_current_email()][0];
                 ui.report_success(i18n.t("Already subscribed to __stream__", {stream: true_stream_name}),
                                   $("#subscriptions-status"), 'subscriptions-status');
             }
@@ -991,7 +1007,7 @@ $(function () {
 
 
             // You are always subscribed to streams you create.
-            principals.push(page_params.email);
+            principals.push(people.my_current_email());
 
             meta.stream_created = stream;
 
@@ -1114,7 +1130,7 @@ $(function () {
             if (data.subscribed.hasOwnProperty(principal)) {
                 error_elem.addClass("hide");
                 warning_elem.addClass("hide");
-                if (util.is_current_user(principal)) {
+                if (people.is_current_user(principal)) {
                     // mark_subscribed adds the user to the member list
                     exports.mark_subscribed(stream);
                 }
@@ -1180,7 +1196,7 @@ $(function () {
                 // Remove the user from the subscriber list.
                 list_entry.remove();
 
-                if (util.is_current_user(principal)) {
+                if (people.is_current_user(principal)) {
                     // If you're unsubscribing yourself, mark whole
                     // stream entry as you being unsubscribed.
                     exports.mark_unsubscribed(stream_name);

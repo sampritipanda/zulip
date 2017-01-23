@@ -32,7 +32,7 @@ to share your ideas!
 This guide will show you how to deploy a bot on your running Zulip server.
 It presumes that you already have a fully implemented `<my-bot>.py` bot and now want to try it out.
 
-1. Copy your bot `<my-bot>.py` to `~/zulip/contrib_bots/lib/`.
+1. Copy your bot `<my-bot>.py` to `~/zulip/contrib_bots/bots/<my-bot>/<my-bot>.py`.
 
     * This is the place where all Zulip bots are stored.
 
@@ -42,13 +42,13 @@ It presumes that you already have a fully implemented `<my-bot>.py` bot and now 
 
 3. Register a new bot on your Zulip server's web interface.
 
-    * Navigate to *Settings* -> *Your Bots* -> *Add a New Bot*, fill
-      out the form and click on *Create Bot*.
-    * A new bot should appear in the *Your Bots* panel.
+    * Navigate to *Settings* -> *Your bots* -> *Add a new bot*, fill
+      out the form and click on *Create bot*.
+    * A new bot should appear in the *Your bots* panel.
 
 4. Add the bot's configuration file on your Zulip server.
 
-    * In the *Your Bots* panel, click on the green icon to download
+    * In the *Your bots* panel, click on the green icon to download
       its configuration file *.zuliprc* (the structure of this file is
       explained [here](#configuration-file).
     * Copy the file to a destination of your choice on your Zulip server, e.g. to `~/.zuliprc` or `~/zuliprc-test`.
@@ -63,7 +63,7 @@ It presumes that you already have a fully implemented `<my-bot>.py` bot and now 
 6. Run the bot.
 
     * On your Zulip server (and outside the Vagrant environment), navigate to `~/zulip/contrib_bots/`
-    * Run `python run.py ~/zulip/contrib_bots/lib/<my-bot>.py
+    * Run `python run.py ~/zulip/contrib_bots/bots/<my-bot>/<my-bot>.py
       --config-file ~/.zuliprc`. The `~/` before `.zuliprc` should
       point to the directory containing the file (in this case, it is
       the home directory).
@@ -252,7 +252,7 @@ None.
 
 * My bot won't start
     * Ensure that your API config file is correct (download the config file from the server).
-    * Ensure that you bot script is located in zulip/contrib_bots/lib/
+    * Ensure that you bot script is located in zulip/contrib_bots/bots/<my-bot>/
 
 * My bot works only on some streams.
     * Subscribe your bot to other streams, as described [here](#how-to-deploy-a-bot).

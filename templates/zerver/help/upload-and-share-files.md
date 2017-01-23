@@ -1,4 +1,4 @@
-## Upload and share files
+# Upload and share files
 
 Zulip allows you to easily attach files, including images, sound, and video by:
 
@@ -16,22 +16,24 @@ After submitting your message, you will see a clickable thumbnail if
 your file is a common image type (i.e. PNG, JPEG, etc.); all other
 files will simply have a link displayed.
 
-### Link Behavior
+## Link Behavior
 
 Clicking all file links will open a new tab that will either:
+
 - display the file if it is an image.
 - download the file automatically to your computer.
 
 If the file has a thumbnail, clicking it will open a lightbox modal with
-varying options depending on the media type. Images may be opened in new tabs or
-downloaded, while videos from YouTube may only be opened (and not downloaded).
+varying options depending on the media type. Images may be opened in new
+tabs or downloaded, while videos from YouTube may only be opened (and not
+downloaded).
 
 !!! tip ""
     You can exit out of a lightbox by clicking the space around the media preview
     or by clicking the x (<i class="icon-vector-remove"></i>) icon found in
     the upper right-hand corner.
 
-### Sharing Files from External Websites
+## Sharing Files from External Websites
 
 Images and videos shared from external websites, such as Imgur or
 YouTube, may have previews generated as well. Clicking previews of

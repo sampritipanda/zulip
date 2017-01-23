@@ -54,6 +54,7 @@ Contents:
    prod-troubleshooting
    prod-customize
    prod-maintain-secure-upgrade
+   security-model
    prod-authentication-methods
    prod-postgres
 
@@ -127,3 +128,4 @@ Contents:
    logging
    release-checklist
    README
+   user-docs

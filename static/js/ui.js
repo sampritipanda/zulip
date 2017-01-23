@@ -210,6 +210,11 @@ exports.update_starred = function (message_id, starred) {
     // lists.
     var message = exports.find_message(message_id);
 
+    // If it isn't cached in the browser, no need to do anything
+    if (message === undefined) {
+        return;
+    }
+
     unread.mark_message_as_read(message);
 
     message.starred = starred;
@@ -257,24 +262,6 @@ exports.show_failed_message_success = function (message_id) {
     update_message_in_all_views(message_id, function update_row(row) {
         row.find('.message_failed').toggleClass('notvisible', true);
     });
-};
-
-exports.small_avatar_url = function (message) {
-    // Try to call this function in all places where we need 25px
-    // avatar images, so that the browser can help
-    // us avoid unnecessary network trips.  (For user-uploaded avatars,
-    // the s=25 parameter is essentially ignored, but it's harmless.)
-    //
-    // We actually request these at s=50, so that we look better
-    // on retina displays.
-    if (message.avatar_url) {
-        var url = message.avatar_url + "&s=50";
-        if (message.sent_by_me) {
-            url += "&stamp=" + settings.avatar_stamp;
-        }
-        return url;
-    }
-    return "";
 };
 
 exports.lightbox = function (data) {
@@ -384,16 +371,16 @@ $(function () {
         viewport.last_movement_direction = delta;
     });
 
-    viewport.message_pane.mousewheel(function (e, delta) {
+    viewport.message_pane.mousewheel(function (e) {
         // Ignore mousewheel events if a modal is visible.  It's weird if the
-        // user can scroll the main view by wheeling over the greyed-out area.
+        // user can scroll the main view by wheeling over the grayed-out area.
         // Similarly, ignore events on settings page etc.
         //
         // We don't handle the compose box here, because it *should* work to
         // select the compose box and then wheel over the message stream.
         var obscured = exports.home_tab_obscured();
         if (!obscured) {
-            throttled_mousewheelhandler(e, delta);
+            throttled_mousewheelhandler(e, e.deltaY);
         } else if (obscured === 'modal') {
             // The modal itself has a handler invoked before this one (see below).
             // preventDefault here so that the tab behind the modal doesn't scroll.
@@ -413,7 +400,7 @@ $(function () {
     // propagation in all cases.  Also, ignore the event if the
     // element is already at the top or bottom.  Otherwise we get a
     // new scroll event on the parent (?).
-    $('.modal-body, .scrolling_list, input, textarea').mousewheel(function (e, delta) {
+    $('.modal-body, .scrolling_list, input, textarea').mousewheel(function (e) {
         var self = $(this);
         var scroll = self.scrollTop();
 
@@ -422,8 +409,8 @@ $(function () {
         var max_scroll = this.scrollHeight - self.innerHeight() - 1;
 
         e.stopPropagation();
-        if (   ((delta > 0) && (scroll <= 0))
-            || ((delta < 0) && (scroll >= max_scroll))) {
+        if (   ((e.deltaY > 0) && (scroll <= 0))
+            || ((e.deltaY < 0) && (scroll >= max_scroll))) {
             e.preventDefault();
         }
     });

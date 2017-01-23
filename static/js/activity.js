@@ -294,6 +294,7 @@ exports.update_users = function (user_list) {
         var presence = exports.presence_info[user_id].status;
         var person = people.get_person_from_user_id(user_id);
         return {
+            href: narrow.pm_with_uri(person.email),
             name: person.full_name,
             user_id: user_id,
             num_unread: get_num_unread(user_id),
@@ -353,6 +354,7 @@ exports.update_huddles = function () {
         return {
             user_ids_string: huddle,
             name: exports.full_huddle_name(huddle),
+            href: narrow.huddle_with_uri(huddle),
             fraction_present: exports.huddle_fraction_present(huddle, exports.presence_info),
             short_name: exports.short_huddle_name(huddle),
         };
@@ -429,7 +431,7 @@ function focus_ping() {
 
             // Ping returns the active peer list
             _.each(data.presences, function (presence, this_email) {
-                if (!util.is_current_user(this_email)) {
+                if (!people.is_current_user(this_email)) {
                     var user_id = people.get_user_id(this_email);
                     if (user_id) {
                         var status = status_from_timestamp(data.server_timestamp,
@@ -479,7 +481,7 @@ exports.set_user_statuses = function (users, server_time) {
     var updated_users = {};
     var status;
     _.each(users, function (presence, email) {
-        if (util.is_current_user(email)) {
+        if (people.is_current_user(email)) {
             return;
         }
         status = status_from_timestamp(server_time, presence);

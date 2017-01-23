@@ -159,7 +159,7 @@ class FencedBlockPreprocessorTest(TestCase):
 
 def bugdown_convert(text):
     # type: (Text) -> Text
-    return bugdown.convert(text, get_realm('zulip').id)
+    return bugdown.convert(text, message_realm=get_realm('zulip'))
 
 class BugdownTest(TestCase):
     def common_bugdown_test(self, text, expected):
@@ -224,7 +224,7 @@ class BugdownTest(TestCase):
             bugdown.make_md_engine(
                 realm.id,
                 {'realm_filters': [[], u'file_links_test.example.com'], 'realm': [u'file_links_test.example.com', 'Realm name']})
-            converted = bugdown.convert(msg, realm_id=realm.id)
+            converted = bugdown.convert(msg, message_realm=realm)
             self.assertEqual(converted, '<p>Check out this file file:///Volumes/myserver/Users/Shared/pi.py</p>')
 
     def test_inline_youtube(self):
@@ -416,11 +416,11 @@ class BugdownTest(TestCase):
 
         # Needs to mock an actual message because that's how bugdown obtains the realm
         msg = Message(sender=get_user_profile_by_email("hamlet@zulip.com"))
-        converted = bugdown.convert(":test:", realm_id=realm.id, message=msg)
+        converted = bugdown.convert(":test:", message_realm=realm, message=msg)
         self.assertEqual(converted, '<p>%s</p>' % (emoji_img(':test:', url)))
 
         do_remove_realm_emoji(realm, 'test')
-        converted = bugdown.convert(":test:", realm_id=realm.id, message=msg)
+        converted = bugdown.convert(":test:", message_realm=realm, message=msg)
         self.assertEqual(converted, '<p>:test:</p>')
 
     def test_unicode_emoji(self):
@@ -452,7 +452,7 @@ class BugdownTest(TestCase):
         flush_per_request_caches()
 
         content = "We should fix #224 and #115, but not issue#124 or #1124z or [trac #15](https://trac.zulip.net/ticket/16) today."
-        converted = bugdown.convert(content, realm_id=realm.id, message=msg)
+        converted = bugdown.convert(content, message_realm=realm, message=msg)
         converted_subject = bugdown.subject_links(realm.id, msg.subject)
 
         self.assertEqual(converted, '<p>We should fix <a href="https://trac.zulip.net/ticket/224" target="_blank" title="https://trac.zulip.net/ticket/224">#224</a> and <a href="https://trac.zulip.net/ticket/115" target="_blank" title="https://trac.zulip.net/ticket/115">#115</a>, but not issue#124 or #1124z or <a href="https://trac.zulip.net/ticket/16" target="_blank" title="https://trac.zulip.net/ticket/16">trac #15</a> today.</p>')
@@ -463,7 +463,7 @@ class BugdownTest(TestCase):
         msg = Message(sender=get_user_profile_by_email('hamlet@zulip.com'))
 
         content = '#ZUL-123 was fixed and code was deployed to production, also #zul-321 was deployed to staging'
-        converted = bugdown.convert(content, realm_id=realm.id, message=msg)
+        converted = bugdown.convert(content, message_realm=realm, message=msg)
 
         self.assertEqual(converted, '<p><a href="https://trac.zulip.net/ticket/ZUL-123" target="_blank" title="https://trac.zulip.net/ticket/ZUL-123">#ZUL-123</a> was fixed and code was deployed to production, also <a href="https://trac.zulip.net/ticket/zul-321" target="_blank" title="https://trac.zulip.net/ticket/zul-321">#zul-321</a> was deployed to staging</p>')
 
@@ -585,7 +585,7 @@ class BugdownTest(TestCase):
 
         content = "@all test"
         self.assertEqual(render_markdown(msg, content),
-                         '<p><span class="user-mention" data-user-email="*">@all</span> test</p>')
+                         '<p><span class="user-mention" data-user-id="*">@all</span> test</p>')
         self.assertTrue(msg.mentions_wildcard)
 
     def test_mention_everyone(self):
@@ -595,7 +595,7 @@ class BugdownTest(TestCase):
 
         content = "@everyone test"
         self.assertEqual(render_markdown(msg, content),
-                         '<p><span class="user-mention" data-user-email="*">@everyone</span> test</p>')
+                         '<p><span class="user-mention" data-user-id="*">@everyone</span> test</p>')
         self.assertTrue(msg.mentions_wildcard)
 
     def test_mention_single(self):
@@ -603,10 +603,11 @@ class BugdownTest(TestCase):
         sender_user_profile = get_user_profile_by_email("othello@zulip.com")
         user_profile = get_user_profile_by_email("hamlet@zulip.com")
         msg = Message(sender=sender_user_profile, sending_client=get_client("test"))
+        user_id = user_profile.id
 
         content = "@**King Hamlet**"
         self.assertEqual(render_markdown(msg, content),
-                         '<p><span class="user-mention" data-user-email="hamlet@zulip.com">@King Hamlet</span></p>')
+                         '<p><span class="user-mention" data-user-id="%s">@King Hamlet</span></p>' % (user_id,))
         self.assertEqual(msg.mentions_user_ids, set([user_profile.id]))
 
     def test_mention_shortname(self):
@@ -614,10 +615,11 @@ class BugdownTest(TestCase):
         sender_user_profile = get_user_profile_by_email("othello@zulip.com")
         user_profile = get_user_profile_by_email("hamlet@zulip.com")
         msg = Message(sender=sender_user_profile, sending_client=get_client("test"))
+        user_id = user_profile.id
 
         content = "@**hamlet**"
         self.assertEqual(render_markdown(msg, content),
-                         '<p><span class="user-mention" data-user-email="hamlet@zulip.com">@King Hamlet</span></p>')
+                         '<p><span class="user-mention" data-user-id="%s">@King Hamlet</span></p>' % (user_id,))
         self.assertEqual(msg.mentions_user_ids, set([user_profile.id]))
 
     def test_mention_multiple(self):
@@ -631,10 +633,10 @@ class BugdownTest(TestCase):
         self.assertEqual(render_markdown(msg, content),
                          '<p>'
                          '<span class="user-mention" '
-                         'data-user-email="hamlet@zulip.com">@King Hamlet</span> and '
+                         'data-user-id="%s">@King Hamlet</span> and '
                          '<span class="user-mention" '
-                         'data-user-email="cordelia@zulip.com">@Cordelia Lear</span>, '
-                         'check this out</p>')
+                         'data-user-id="%s">@Cordelia Lear</span>, '
+                         'check this out</p>' % (hamlet.id, cordelia.id))
         self.assertEqual(msg.mentions_user_ids, set([hamlet.id, cordelia.id]))
 
     def test_mention_invalid(self):
@@ -817,19 +819,23 @@ class BugdownTest(TestCase):
         verifies almost all inline patterns are disabled, but
         inline_interesting_links is still enabled"""
         msg = "**test**"
-        converted = bugdown.convert(msg, realm_id=bugdown.ZEPHYR_MIRROR_BUGDOWN_KEY)
+        realm = get_realm("mit")
+        client = get_client("zephyr_mirror")
+        message = Message(sending_client=client,
+                          sender=get_user_profile_by_email("sipbtest@mit.edu"))
+        converted = bugdown.convert(msg, message_realm=realm, message=message)
         self.assertEqual(
             converted,
             "<p>**test**</p>",
             )
         msg = "* test"
-        converted = bugdown.convert(msg, realm_id=bugdown.ZEPHYR_MIRROR_BUGDOWN_KEY)
+        converted = bugdown.convert(msg, message_realm=realm, message=message)
         self.assertEqual(
             converted,
             "<p>* test</p>",
             )
         msg = "https://lists.debian.org/debian-ctte/2014/02/msg00173.html"
-        converted = bugdown.convert(msg, realm_id=bugdown.ZEPHYR_MIRROR_BUGDOWN_KEY)
+        converted = bugdown.convert(msg, message_realm=realm, message=message)
         self.assertEqual(
             converted,
             '<p><a href="https://lists.debian.org/debian-ctte/2014/02/msg00173.html" target="_blank" title="https://lists.debian.org/debian-ctte/2014/02/msg00173.html">https://lists.debian.org/debian-ctte/2014/02/msg00173.html</a></p>',
@@ -839,7 +845,7 @@ class BugdownApiTests(ZulipTestCase):
     def test_render_message_api(self):
         # type: () -> None
         content = 'That is a **bold** statement'
-        result = self.client_get(
+        result = self.client_post(
             '/api/v1/messages/render',
             dict(content=content),
             **self.api_auth('othello@zulip.com')
@@ -853,15 +859,16 @@ class BugdownApiTests(ZulipTestCase):
         # type: () -> None
         """Determines whether we're correctly passing the realm context"""
         content = 'This mentions #**Denmark** and @**King Hamlet**.'
-        result = self.client_get(
+        result = self.client_post(
             '/api/v1/messages/render',
             dict(content=content),
             **self.api_auth('othello@zulip.com')
         )
         self.assert_json_success(result)
         data = ujson.loads(result.content)
+        user_id = get_user_profile_by_email('hamlet@zulip.com').id
         self.assertEqual(data['rendered'],
-                         u'<p>This mentions <a class="stream" data-stream-id="%s" href="/#narrow/stream/Denmark">#Denmark</a> and <span class="user-mention" data-user-email="hamlet@zulip.com">@King Hamlet</span>.</p>' % (get_stream("Denmark", get_realm("zulip")).id),)
+                         u'<p>This mentions <a class="stream" data-stream-id="%s" href="/#narrow/stream/Denmark">#Denmark</a> and <span class="user-mention" data-user-id="%s">@King Hamlet</span>.</p>' % (get_stream("Denmark", get_realm("zulip")).id, user_id))
 
 class BugdownErrorTests(ZulipTestCase):
     def test_bugdown_error_handling(self):

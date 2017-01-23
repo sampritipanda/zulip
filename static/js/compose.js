@@ -1002,7 +1002,7 @@ $(function () {
                 // incorrect wrong, users will see a brief flicker).
                 $("#preview_content").html(echo.apply_markdown(message));
             }
-            channel.get({
+            channel.post({
                 url: '/json/messages/render',
                 idempotent: true,
                 data: {content: message},
