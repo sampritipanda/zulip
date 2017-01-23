@@ -159,8 +159,9 @@ exports.setup_page = function (callback) {
                     stream: stream,
                     stream_color: stream_data.get_color(draft.stream),
                     topic: draft.subject,
-                    content: echo.apply_markdown(draft.content),
+                    raw_content: draft.content,
                 };
+                echo.apply_markdown(formatted);
             } else {
                 var emails = util.extract_pm_recipients(draft.private_message_recipient);
                 var recipients = _.map(emails, function (email) {
@@ -176,8 +177,9 @@ exports.setup_page = function (callback) {
                     draft_id: id,
                     is_stream: false,
                     recipients: recipients,
-                    content: echo.apply_markdown(draft.content),
+                    raw_content: draft.content,
                 };
+                echo.apply_markdown(formatted);
             }
             return formatted;
         });
