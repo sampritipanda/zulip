@@ -93,6 +93,8 @@ class PublicURLTest(ZulipTestCase):
         # Add all files in 'templates/zerver/help' directory (except for 'main.html' and
         # 'index.md') to `get_urls['200']` list.
         for doc in os.listdir('./templates/zerver/help'):
+            if doc.startswith(".") or '~' in doc or '#' in doc:
+                continue
             if doc not in {'main.html', 'index.md', 'include'}:
                 get_urls[200].append('/help/' + os.path.splitext(doc)[0]) # Strip the extension.
 
@@ -184,7 +186,7 @@ class PasswordResetTest(ZulipTestCase):
         # check the redirect link telling you to check mail for password reset link
         self.assertEqual(result.status_code, 302)
         self.assertTrue(result["Location"].endswith(
-                "/accounts/password/reset/done/"))
+            "/accounts/password/reset/done/"))
         result = self.client_get(result["Location"])
 
         self.assert_in_response("Check your email to finish the process.", result)
@@ -319,6 +321,15 @@ class LoginTest(ZulipTestCase):
         self.client_post('/accounts/logout/')
         self.login(email, password)
         self.assertEqual(get_session_dict_user(self.client.session), user_profile.id)
+
+    def test_login_page_redirects_logged_in_user(self):
+        # type: () -> None
+        """You will be redirected to the app's main page if you land on the
+        login page when already logged in.
+        """
+        self.login("cordelia@zulip.com")
+        response = self.client_get("/login/")
+        self.assertEqual(response["Location"], "/")
 
 class InviteUserTest(ZulipTestCase):
 
@@ -479,7 +490,7 @@ earl-test@zulip.com""", ["Denmark"]))
             "We weren't able to invite anyone.")
         self.assertRaises(PreregistrationUser.DoesNotExist,
                           lambda: PreregistrationUser.objects.get(
-                            email="hamlet@zulip.com"))
+                              email="hamlet@zulip.com"))
         self.check_sent_emails([])
 
     def test_invite_some_existing_some_new(self):
@@ -503,7 +514,7 @@ so we didn't send them an invitation. We did send invitations to everyone else!"
         for email in existing:
             self.assertRaises(PreregistrationUser.DoesNotExist,
                               lambda: PreregistrationUser.objects.get(
-                                email=email))
+                                  email=email))
         for email in new:
             self.assertTrue(PreregistrationUser.objects.get(email=email))
 
@@ -687,7 +698,7 @@ class EmailUnsubscribeTests(ZulipTestCase):
         # Simulate a new user signing up, which enqueues 2 welcome e-mails.
         enqueue_welcome_emails(email, "King Hamlet")
         self.assertEqual(2, len(ScheduledJob.objects.filter(
-                type=ScheduledJob.EMAIL, filter_string__iexact=email)))
+            type=ScheduledJob.EMAIL, filter_string__iexact=email)))
 
         # Simulate unsubscribing from the welcome e-mails.
         unsubscribe_link = one_click_unsubscribe_link(user_profile, "welcome")
@@ -696,7 +707,7 @@ class EmailUnsubscribeTests(ZulipTestCase):
         # The welcome email jobs are no longer scheduled.
         self.assertEqual(result.status_code, 200)
         self.assertEqual(0, len(ScheduledJob.objects.filter(
-                type=ScheduledJob.EMAIL, filter_string__iexact=email)))
+            type=ScheduledJob.EMAIL, filter_string__iexact=email)))
 
     def test_digest_unsubscribe(self):
         # type: () -> None
@@ -714,7 +725,7 @@ class EmailUnsubscribeTests(ZulipTestCase):
         # Enqueue a fake digest email.
         send_digest_email(user_profile, "", "", "")
         self.assertEqual(1, len(ScheduledJob.objects.filter(
-                    type=ScheduledJob.EMAIL, filter_string__iexact=email)))
+            type=ScheduledJob.EMAIL, filter_string__iexact=email)))
 
         # Simulate unsubscribing from digest e-mails.
         unsubscribe_link = one_click_unsubscribe_link(user_profile, "digest")
@@ -726,7 +737,7 @@ class EmailUnsubscribeTests(ZulipTestCase):
         user_profile = UserProfile.objects.get(email="hamlet@zulip.com")
         self.assertFalse(user_profile.enable_digest_emails)
         self.assertEqual(0, len(ScheduledJob.objects.filter(
-                type=ScheduledJob.EMAIL, filter_string__iexact=email)))
+            type=ScheduledJob.EMAIL, filter_string__iexact=email)))
 
 class RealmCreationTest(ZulipTestCase):
 
@@ -745,7 +756,7 @@ class RealmCreationTest(ZulipTestCase):
             result = self.client_post('/create_realm/', {'email': email})
             self.assertEqual(result.status_code, 302)
             self.assertTrue(result["Location"].endswith(
-                    "/accounts/send_confirm/%s" % (email,)))
+                "/accounts/send_confirm/%s" % (email,)))
             result = self.client_get(result["Location"])
             self.assert_in_response("Check your email so we can get started.", result)
 
@@ -785,7 +796,7 @@ class RealmCreationTest(ZulipTestCase):
             result = self.client_post('/create_realm/', {'email': email})
             self.assertEqual(result.status_code, 302)
             self.assertTrue(result["Location"].endswith(
-                    "/accounts/send_confirm/%s" % (email,)))
+                "/accounts/send_confirm/%s" % (email,)))
             result = self.client_get(result["Location"])
             self.assert_in_response("Check your email so we can get started.", result)
 
@@ -865,7 +876,7 @@ class UserSignUpTest(ZulipTestCase):
         result = self.client_post('/accounts/home/', {'email': email})
         self.assertEqual(result.status_code, 302)
         self.assertTrue(result["Location"].endswith(
-                "/accounts/send_confirm/%s" % (email,)))
+            "/accounts/send_confirm/%s" % (email,)))
         result = self.client_get(result["Location"])
         self.assert_in_response("Check your email so we can get started.", result)
 
@@ -895,15 +906,16 @@ class UserSignUpTest(ZulipTestCase):
         realm.invite_required = False
         realm.save()
 
-        realm = get_realm('mit')
-        do_deactivate_realm(realm)
-        realm.save()
+        for string_id in ('simple', 'mit'):
+            realm = get_realm(string_id)
+            do_deactivate_realm(realm)
+            realm.save()
 
         result = self.client_post('/register/', {'email': email})
 
         self.assertEqual(result.status_code, 302)
         self.assertTrue(result["Location"].endswith(
-                "/accounts/send_confirm/%s" % (email,)))
+            "/accounts/send_confirm/%s" % (email,)))
         result = self.client_get(result["Location"])
         self.assert_in_response("Check your email so we can get started.", result)
         # Visit the confirmation link.
@@ -944,7 +956,7 @@ class UserSignUpTest(ZulipTestCase):
 
         self.assertEqual(result.status_code, 302)
         self.assertTrue(result["Location"].endswith(
-                "/accounts/send_confirm/%s" % (email,)))
+            "/accounts/send_confirm/%s" % (email,)))
         result = self.client_get(result["Location"])
         self.assert_in_response("Check your email so we can get started.", result)
         # Visit the confirmation link.
@@ -1023,7 +1035,7 @@ class UserSignUpTest(ZulipTestCase):
 
         self.assertEqual(result.status_code, 302)
         self.assertTrue(result["Location"].endswith(
-                "/accounts/send_confirm/%s" % (email,)))
+            "/accounts/send_confirm/%s" % (email,)))
         result = self.client_get(result["Location"])
         self.assert_in_response("Check your email so we can get started.", result)
         # Visit the confirmation link.
@@ -1097,7 +1109,7 @@ class UserSignUpTest(ZulipTestCase):
 
         self.assertEqual(result.status_code, 302)
         self.assertTrue(result["Location"].endswith(
-                "/accounts/send_confirm/%s" % (email,)))
+            "/accounts/send_confirm/%s" % (email,)))
         result = self.client_get(result["Location"])
         self.assert_in_response("Check your email so we can get started.", result)
         # Visit the confirmation link.

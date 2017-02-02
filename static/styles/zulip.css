@@ -463,6 +463,8 @@ li.actual-dropdown-menu i {
     /* In gear menu, make icons the same width so labels line up. */
     display: inline-block;
     width: 14px;
+    text-align: center;
+    margin-right: 3px;
 }
 
 .message_area_padder {
@@ -1686,6 +1688,16 @@ nav a .no-style {
     visibility: hidden;
 }
 
+#searchbox a.search_icon {
+    color: #ccc;
+    text-decoration: none;
+}
+
+#searchbox a.search_icon:hover {
+    color: #000;
+    text-decoration: none;
+}
+
 .highlight {
     background-color: #FCEA81;
 }
@@ -1786,6 +1798,13 @@ div.floating_recipient {
     line-height: 38px;
 }
 
+.settings-section #admin_page_users_loading_indicator,
+.settings-section #admin_page_deactivated_users_loading_indicator,
+.settings-section #admin_page_bots_loading_indicator,
+.settings-section #admin_page_streams_loading_indicator {
+    margin: 0 auto;
+}
+
 .settings-section .loading_indicator_text {
     font-size: 12px;
     font-weight: 400;
@@ -1796,8 +1815,8 @@ div.floating_recipient {
 }
 
 .settings-section .loading_indicator_spinner {
-    width: 12px;
-    height: 12px;
+    width: 100%;
+    height: 100%;
     vertical-align: middle;
     display: inline-block;
 }
@@ -2123,6 +2142,12 @@ button.topic_edit_cancel {
     margin-top: -7px;
 }
 
+.emoji.realm-emoji {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
 .twitter-tweet {
     border: 1px solid #ddd;
     padding: .5em .75em;
@@ -2227,6 +2252,10 @@ button.topic_edit_cancel {
     margin-right: -50%;
 }
 
+.include-sender .message_edit {
+    margin-top: -14px;
+}
+
 .message_edit {
     display: none;
     margin-top: 5px;
@@ -2234,18 +2263,18 @@ button.topic_edit_cancel {
 }
 
 /* Reduce some of the heavy padding from Bootstrap. */
+#message_edit_form {
+    margin-bottom: 10px;
+}
 #message_edit_form .edit-control-label {
-    width: auto;
-    float: left;
-    font-size: 80%;
     vertical-align: top;
     padding-top: 0px;
     margin-right: 10px;
+    font-size: 80%;
 }
 #message_edit_form .edit-controls {
-    margin-left: 35px; /* Match .message_content padding less 7px textarea padding and border */
-    margin-right: -7px;
-    margin-top: 10px;
+    margin-left: 0px;
+    margin-top: 0px;
 }
 #message_edit_form textarea {
     width: 100%;
@@ -2269,6 +2298,10 @@ button.topic_edit_cancel {
     float: right;
     padding-left: 5px;
     padding-top: 3px;
+}
+
+#message_edit_form .action-buttons {
+    margin: 10px 0px;
 }
 
 #topic_edit_form {
@@ -2374,10 +2407,13 @@ button.topic_edit_cancel {
 /* embed */
 .message_content .message_embed {
     display: block;
+    position: relative;
     margin: 5px 0px;
     border: none;
     border-left: 3px solid #eee;
+    height: 70px;
     padding: 5px;
+    z-index: 1;
 }
 
 .message_content .message_embed > * {
@@ -2389,21 +2425,20 @@ button.topic_edit_cancel {
 .message_embed .message_embed_title {
     padding-top: 0px;
     /* to remove the spacing that the font has from the top of the container. */
-    margin-top: -5px;
+    margin-top: -1px;
 
     font-size: 1em;
     font-weight: 600;
     line-height: normal;
 }
 
-.message_embed .message_embed_title a:hover {
-    text-decoration: none;
-    border-bottom: 1px solid #005580;
-}
-
 .message_embed .message_embed_description {
+    position: relative;
     margin-top: -5px;
     max-width: 500px;
+
+    /* to put it below the container gradient. */
+    z-index: -1;
 }
 
 .message_embed .message_embed_image {
@@ -2419,6 +2454,8 @@ button.topic_edit_cancel {
     display: inline-block;
     vertical-align: top;
     max-width: calc(100% - 100px);
+    max-height: 70px;
+    overflow: hidden;
 }
 
 .message_embed .data-container div {
@@ -2427,6 +2464,10 @@ button.topic_edit_cancel {
 }
 
 @media (max-width: 600px) {
+    .message_content .message_embed {
+        height: auto;
+    }
+
     .message_embed .message_embed_image {
         width: 100%;
         height: 100px;

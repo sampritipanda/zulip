@@ -273,7 +273,8 @@ class BugdownTest(TestCase):
         # type: () -> None
         # Don't fail on bad dropbox links
         msg = "https://zulip-test.dropbox.com/photos/cl/ROmr9K1XYtmpneM"
-        converted = bugdown_convert(msg)
+        with mock.patch('zerver.lib.bugdown.fetch_open_graph_image', return_value=None):
+            converted = bugdown_convert(msg)
         self.assertEqual(converted, '<p><a href="https://zulip-test.dropbox.com/photos/cl/ROmr9K1XYtmpneM" target="_blank" title="https://zulip-test.dropbox.com/photos/cl/ROmr9K1XYtmpneM">https://zulip-test.dropbox.com/photos/cl/ROmr9K1XYtmpneM</a></p>')
 
     def test_twitter_id_extraction(self):
@@ -456,7 +457,7 @@ class BugdownTest(TestCase):
         converted_subject = bugdown.subject_links(realm.id, msg.subject)
 
         self.assertEqual(converted, '<p>We should fix <a href="https://trac.zulip.net/ticket/224" target="_blank" title="https://trac.zulip.net/ticket/224">#224</a> and <a href="https://trac.zulip.net/ticket/115" target="_blank" title="https://trac.zulip.net/ticket/115">#115</a>, but not issue#124 or #1124z or <a href="https://trac.zulip.net/ticket/16" target="_blank" title="https://trac.zulip.net/ticket/16">trac #15</a> today.</p>')
-        self.assertEqual(converted_subject,  [u'https://trac.zulip.net/ticket/444'])
+        self.assertEqual(converted_subject, [u'https://trac.zulip.net/ticket/444'])
 
         RealmFilter(realm=realm, pattern=r'#(?P<id>[a-zA-Z]+-[0-9]+)',
                     url_format_string=r'https://trac.zulip.net/ticket/%(id)s').save()
@@ -532,7 +533,7 @@ class BugdownTest(TestCase):
         boring_msg = Message(sender=get_user_profile_by_email("othello@zulip.com"),
                              subject=u"no match here")
         converted_boring_subject = bugdown.subject_links(realm.id, boring_msg.subject)
-        self.assertEqual(converted_boring_subject,  [])
+        self.assertEqual(converted_boring_subject, [])
 
     def test_is_status_message(self):
         # type: () -> None
@@ -827,19 +828,19 @@ class BugdownTest(TestCase):
         self.assertEqual(
             converted,
             "<p>**test**</p>",
-            )
+        )
         msg = "* test"
         converted = bugdown.convert(msg, message_realm=realm, message=message)
         self.assertEqual(
             converted,
             "<p>* test</p>",
-            )
+        )
         msg = "https://lists.debian.org/debian-ctte/2014/02/msg00173.html"
         converted = bugdown.convert(msg, message_realm=realm, message=message)
         self.assertEqual(
             converted,
             '<p><a href="https://lists.debian.org/debian-ctte/2014/02/msg00173.html" target="_blank" title="https://lists.debian.org/debian-ctte/2014/02/msg00173.html">https://lists.debian.org/debian-ctte/2014/02/msg00173.html</a></p>',
-            )
+        )
 
 class BugdownApiTests(ZulipTestCase):
     def test_render_message_api(self):

@@ -81,7 +81,6 @@ Full feature Changelog:
 - Fixed CSS issues with message topic editing.
 - Fixed several transactionality bugs (e.g. in Huddle creation).
 - Fixed missed-message email configuration error handling.
-- Fixed a significant performance bug in the Tornado subsystem.
 - Fixed annoying @-mentions in Jira integration.
 - Fixed various mismatches between frontend and backend markdown
   implementations.
@@ -94,7 +93,6 @@ Full feature Changelog:
 - Improved how dates are displayed in the UI.
 - Improved default settings for zxcvbn password strength checker.
 - Upgraded jQuery to the latest 1.12 release.
-- Eliminated most legacy endpoints.
 - Made numerous improvements to the development tooling.
 - Made extensive improvements to code organization.
 - Integrated and cleared errors from several new linters.
@@ -102,6 +100,9 @@ Full feature Changelog:
 - Suppressed @-all mentions being treated as mentions on muted
   streams.
 - Documented preliminary design for interactive bot system.
+
+### 1.4.3 - 2017-01-29
+- CVE-2017-0881: Users could subscribe to invite-only streams.
 
 ### 1.4.2 - 2016-09-27
 

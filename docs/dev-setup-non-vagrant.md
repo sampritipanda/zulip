@@ -94,7 +94,7 @@ wget https://dl.dropboxusercontent.com/u/283158365/zuliposs/postgresql-9.1-tsear
 sudo dpkg -i postgresql-9.1-tsearch-extras_0.1.2_amd64.deb
 
 # If on 14.04:
-https://launchpad.net/~tabbott/+archive/ubuntu/zulip/+files/postgresql-9.3-tsearch-extras_0.1.3_amd64.deb
+wget https://launchpad.net/~tabbott/+archive/ubuntu/zulip/+files/postgresql-9.3-tsearch-extras_0.1.3_amd64.deb
 sudo dpkg -i postgresql-9.3-tsearch-extras_0.1.3_amd64.deb
 
 # If on 15.04 or jessie:
@@ -395,7 +395,7 @@ docker build -t user/zulipdev .
 Commit and tag the provisioned images. The below will install Zulip's dependencies:
 ```
 docker run -itv $(pwd):/srv/zulip -p 9991:9991 user/zulipdev /bin/bash
-$ /usr/bin/python /srv/zulip/tools/provision --docker
+# /bin/bash /srv/zulip/tools/provision --docker
 docker ps -af ancestor=user/zulipdev
 docker commit -m "Zulip installed" <container id> user/zulipdev:v2
 ```

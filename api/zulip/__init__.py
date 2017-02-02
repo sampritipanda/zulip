@@ -79,9 +79,9 @@ class CountingBackoff(object):
 
     def _check_success_timeout(self):
         # type: () -> None
-        if (self.timeout_success_equivalent is not None
-            and self.last_attempt_time != 0
-                and time.time() - self.last_attempt_time > self.timeout_success_equivalent):
+        if (self.timeout_success_equivalent is not None and
+            self.last_attempt_time != 0 and
+                time.time() - self.last_attempt_time > self.timeout_success_equivalent):
             self.number_of_retries = 0
 
 class RandomExponentialBackoff(CountingBackoff):
@@ -285,10 +285,10 @@ class Client(object):
             vendor_version = platform.mac_ver()[0]
 
         return "{client_name} ({vendor}; {vendor_version})".format(
-                client_name=self.client_name,
-                vendor=vendor,
-                vendor_version=vendor_version,
-                )
+            client_name=self.client_name,
+            vendor=vendor,
+            vendor_version=vendor_version,
+        )
 
     def do_api_query(self, orig_request, url, method="POST", longpolling=False, files=None):
         # type: (Mapping[str, Any], str, str, bool, List[IO]) -> Dict[str, Any]
@@ -357,15 +357,15 @@ class Client(object):
                     client_cert = self.client_cert
 
                 res = requests.request(
-                        method,
-                        urllib.parse.urljoin(self.base_url, url),
-                        auth=requests.auth.HTTPBasicAuth(self.email,
-                                                         self.api_key),
-                        verify=self.tls_verification,
-                        cert=client_cert,
-                        timeout=90,
-                        headers={"User-agent": self.get_user_agent()},
-                        **kwargs)
+                    method,
+                    urllib.parse.urljoin(self.base_url, url),
+                    auth=requests.auth.HTTPBasicAuth(self.email,
+                                                     self.api_key),
+                    verify=self.tls_verification,
+                    cert=client_cert,
+                    timeout=90,
+                    headers={"User-agent": self.get_user_agent()},
+                    **kwargs)
 
                 # On 50x errors, try again after a short sleep
                 if str(res.status_code).startswith('5'):
@@ -423,6 +423,7 @@ class Client(object):
         # type: (Callable, Optional[List[str]], Any) -> None
         if narrow is None:
             narrow = []
+
         def do_register():
             # type: () -> Tuple[str, int]
             while True:
@@ -507,7 +508,7 @@ class Client(object):
             See api/examples/edit-message for example usage.
         '''
         return self.call_endpoint(
-            url='messages',
+            url='messages/%d' % (message_data['message_id'],),
             method='PATCH',
             request=message_data,
         )

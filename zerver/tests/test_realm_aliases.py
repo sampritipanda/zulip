@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+from zerver.lib.actions import do_change_is_admin, do_create_realm
 from zerver.lib.test_classes import ZulipTestCase
 from zerver.models import get_realm, get_realm_by_email_domain, \
-    GetRealmByDomainException, RealmAlias
+    get_user_profile_by_email, GetRealmByDomainException, RealmAlias
 import ujson
 
 
@@ -32,27 +33,38 @@ class RealmAliasTest(ZulipTestCase):
     def test_create(self):
         # type: () -> None
         self.login("iago@zulip.com")
-        data = {"domain": ""}
+        data = {'domain': ujson.dumps('')}
         result = self.client_post("/json/realm/domains", info=data)
-        self.assert_json_error(result, 'Domain can\'t be empty.')
+        self.assert_json_error(result, 'Invalid domain: Domain can\'t be empty.')
 
-        data['domain'] = 'zulip.org'
+        data = {'domain': ujson.dumps('zulip.org')}
         result = self.client_post("/json/realm/domains", info=data)
         self.assert_json_success(result)
 
         result = self.client_post("/json/realm/domains", info=data)
-        self.assert_json_error(result, 'A Realm for this domain already exists.')
+        self.assert_json_error(result, 'The domain zulip.org is already a part of your organization.')
+
+        self.login("sipbtest@mit.edu")
+        mit_user_profile = get_user_profile_by_email("sipbtest@mit.edu")
+        do_change_is_admin(mit_user_profile, True)
+        result = self.client_post("/json/realm/domains", info=data)
+        self.assert_json_error(result, 'The domain zulip.org belongs to another organization.')
+        with self.settings(REALMS_HAVE_SUBDOMAINS=True):
+            result = self.client_post("/json/realm/domains", info=data,
+                                      HTTP_HOST=mit_user_profile.realm.host)
+            self.assert_json_success(result)
 
     def test_delete(self):
         # type: () -> None
         self.login("iago@zulip.com")
         realm = get_realm('zulip')
-        alias_id = RealmAlias.objects.create(realm=realm, domain='zulip.org').id
+        RealmAlias.objects.create(realm=realm, domain='zulip.org')
         aliases_count = RealmAlias.objects.count()
-        result = self.client_delete("/json/realm/domains/{0}".format(alias_id + 1))
-        self.assert_json_error(result, 'No such entry found.')
+        result = self.client_delete("/json/realm/domains/non-existent.com")
+        self.assertEqual(result.status_code, 400)
+        self.assert_json_error(result, 'No entry found for domain non-existent.com.')
 
-        result = self.client_delete("/json/realm/domains/{0}".format(alias_id))
+        result = self.client_delete("/json/realm/domains/zulip.org")
         self.assert_json_success(result)
         self.assertEqual(RealmAlias.objects.count(), aliases_count - 1)
 
@@ -61,5 +73,5 @@ class RealmAliasTest(ZulipTestCase):
         self.assertEqual(get_realm_by_email_domain('user@zulip.com').string_id, 'zulip')
         self.assertEqual(get_realm_by_email_domain('user@fakedomain.com'), None)
         with self.settings(REALMS_HAVE_SUBDOMAINS = True), (
-             self.assertRaises(GetRealmByDomainException)):
+                self.assertRaises(GetRealmByDomainException)):
             get_realm_by_email_domain('user@zulip.com')

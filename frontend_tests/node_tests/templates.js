@@ -6,6 +6,7 @@ set_global('page_params', {realm_emoji: {
 add_dependencies({
     Handlebars: 'handlebars',
     templates: 'js/templates',
+    emoji_codes: 'generated/emoji/emoji_codes.js',
     emoji: 'js/emoji',
     i18n: 'i18next',
 });
@@ -95,26 +96,20 @@ function render(template_name, args) {
     var html = "<table>";
     var args = {
         alias: {
-            id: 1,
             domain: 'zulip.org',
         },
     };
-    html += render("admin_alias_list", args);
+    html += render("admin-alias-list", args);
     html += "</table>";
 
     var button = $(html).find('.btn');
     var domain = $(html).find('.domain');
-    var row = button.closest('tr');
 
-    assert.equal(button.text().trim(), "Delete");
+    assert.equal(button.text().trim(), "Remove");
     assert(button.hasClass("delete_alias"));
-    assert.equal(button.data("id"), "1");
-
     assert.equal(domain.text(), "zulip.org");
 
-    assert.equal(row.attr("id"), "alias_1");
-
-    global.write_handlebars_output("admin_alias_list", html);
+    global.write_handlebars_output("admin-alias-list", html);
 }());
 
 (function admin_default_streams_list() {
@@ -428,9 +423,23 @@ function render(template_name, args) {
 }());
 
 (function emoji_popover_content() {
-    var args = {
-        emoji_list: global.emoji.emojis_name_to_css_class,
-    };
+    var args = (function () {
+        var map = {};
+        for (var x in global.emoji.emojis_name_to_css_class) {
+            if (!global.emoji.realm_emojis[x]) {
+                map[x] = {
+                    name: x,
+                    css_name: global.emoji.emojis_name_to_css_class[x],
+                    url: global.emoji.emojis_by_name[x],
+                };
+            }
+        }
+
+        return {
+            emoji_list: map,
+            realm_emoji: global.emoji.realm_emojis,
+        };
+    }());
 
     var html = '<div style="height: 250px">';
     html += render('emoji_popover_content', args);

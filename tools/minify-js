@@ -109,10 +109,10 @@ for js_group, filespec in six.iteritems(JS_SPECS):
                  for filename in filespec.get('minifed_source_filenames', [])]
 
     out_file = os.path.join(MIN_DIR, os.path.basename(filespec['output_filename']))
-    map_file = os.path.join(MAP_DIR, os.path.basename(filespec['output_filename'])
-                            + '.map')
+    map_file = os.path.join(MAP_DIR, os.path.basename(filespec['output_filename']) +
+                            '.map')
 
-    if (not 'force_minify' in filespec) and \
+    if ('force_minify' not in filespec) and \
        (prev_deploy and len(set(in_files) & changed_files) == 0):
         # Try to reuse the output file from previous deploy
         try:
@@ -130,8 +130,8 @@ for js_group, filespec in six.iteritems(JS_SPECS):
     # (N.B. we include STATIC_HEADER_FILE before the JavaScripts.
     #  This way it doesn't throw off the source map.)
     cmd = '%s --language_in ECMASCRIPT5 --create_source_map %s %s %s' % (
-            CLOSURE_BINARY, map_file,
-            settings.STATIC_HEADER_FILE, ' '.join(in_files))
+        CLOSURE_BINARY, map_file,
+        settings.STATIC_HEADER_FILE, ' '.join(in_files))
     js = subprocess.check_output(cmd, shell=True)
 
     # Write out the JS

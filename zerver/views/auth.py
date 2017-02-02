@@ -327,6 +327,8 @@ def log_into_subdomain(request):
 
 def login_page(request, **kwargs):
     # type: (HttpRequest, **Any) -> HttpResponse
+    if request.user.is_authenticated():
+        return HttpResponseRedirect("/")
     if is_subdomain_root_or_alias(request) and settings.REALMS_HAVE_SUBDOMAINS:
         redirect_url = reverse('zerver.views.registration.find_my_team')
         return HttpResponseRedirect(redirect_url)
@@ -340,7 +342,12 @@ def login_page(request, **kwargs):
         users_query = UserProfile.objects.select_related().filter(is_bot=False, is_active=True)
         users = users_query.order_by('email')[0:MAX_DEV_BACKEND_USERS]
         extra_context['direct_admins'] = [u.email for u in users if u.is_realm_admin]
-        extra_context['direct_users'] = [u.email for u in users if not u.is_realm_admin]
+        extra_context['direct_users'] = [
+            u.email for u in users
+            if not u.is_realm_admin and u.realm.string_id == 'zulip']
+        extra_context['community_users'] = [
+            u.email for u in users
+            if u.realm.string_id == 'simple']
     template_response = django_login_page(
         request, authentication_form=OurAuthenticationForm,
         extra_context=extra_context, **kwargs)
@@ -389,10 +396,10 @@ def api_dev_fetch_api_key(request, username=REQ()):
     user_profile = authenticate(username=username,
                                 realm_subdomain=get_subdomain(request),
                                 return_data=return_data)
-    if return_data.get("inactive_realm") == True:
+    if return_data.get("inactive_realm"):
         return json_error(_("Your realm has been deactivated."),
                           data={"reason": "realm deactivated"}, status=403)
-    if return_data.get("inactive_user") == True:
+    if return_data.get("inactive_user"):
         return json_error(_("Your account has been disabled."),
                           data={"reason": "user disable"}, status=403)
     login(request, user_profile)
@@ -424,17 +431,17 @@ def api_fetch_api_key(request, username=REQ(), password=REQ()):
                                     password=password,
                                     realm_subdomain=get_subdomain(request),
                                     return_data=return_data)
-    if return_data.get("inactive_user") == True:
+    if return_data.get("inactive_user"):
         return json_error(_("Your account has been disabled."),
                           data={"reason": "user disable"}, status=403)
-    if return_data.get("inactive_realm") == True:
+    if return_data.get("inactive_realm"):
         return json_error(_("Your realm has been deactivated."),
                           data={"reason": "realm deactivated"}, status=403)
-    if return_data.get("password_auth_disabled") == True:
+    if return_data.get("password_auth_disabled"):
         return json_error(_("Password auth is disabled in your team."),
                           data={"reason": "password auth disabled"}, status=403)
     if user_profile is None:
-        if return_data.get("valid_attestation") == True:
+        if return_data.get("valid_attestation"):
             # We can leak that the user is unregistered iff they present a valid authentication string for the user.
             return json_error(_("This user is not registered; do so from a browser."),
                               data={"reason": "unregistered"}, status=403)

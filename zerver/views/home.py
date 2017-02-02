@@ -16,7 +16,7 @@ from zerver.models import Message, UserProfile, Stream, Subscription, Huddle, \
     Recipient, Realm, UserMessage, DefaultStream, RealmEmoji, RealmAlias, \
     RealmFilter, \
     PreregistrationUser, get_client, UserActivity, \
-    get_stream, UserPresence, get_recipient, name_changes_disabled, email_to_username, \
+    UserPresence, get_recipient, name_changes_disabled, email_to_username, \
     list_of_domains_for_realm
 from zerver.lib.actions import update_user_presence, do_change_tos_version, \
     do_events_register, do_update_pointer, get_cross_realm_dicts, realm_user_count
@@ -24,6 +24,7 @@ from zerver.lib.avatar import avatar_url
 from zerver.lib.i18n import get_language_list, get_language_name, \
     get_language_list_for_templates
 from zerver.lib.push_notifications import num_push_devices_for_user
+from zerver.lib.streams import access_stream_by_name
 from zerver.lib.utils import statsd, get_subdomain
 from zproject.backends import password_auth_enabled
 from zproject.jinja2 import render_to_response
@@ -61,7 +62,7 @@ def approximate_unread_count(user_profile):
     # type: (UserProfile) -> int
     not_in_home_view_recipients = [sub.recipient.id for sub in
                                    Subscription.objects.filter(
-                                        user_profile=user_profile, in_home_view=False)]
+                                       user_profile=user_profile, in_home_view=False)]
 
     # TODO: We may want to exclude muted messages from this count.
     #       It was attempted in the past, but the original attempt
@@ -119,13 +120,13 @@ def home_real(request):
     narrow_topic = request.GET.get("topic")
     if request.GET.get("stream"):
         try:
-            narrow_stream = get_stream(request.GET.get("stream"), user_profile.realm)
-            assert(narrow_stream is not None)
-            assert(narrow_stream.is_public())
+            narrow_stream_name = request.GET.get("stream")
+            (narrow_stream, ignored_rec, ignored_sub) = access_stream_by_name(
+                user_profile, narrow_stream_name)
             narrow = [["stream", narrow_stream.name]]
         except Exception:
             logging.exception("Narrow parsing")
-        if narrow_topic is not None:
+        if narrow_stream is not None and narrow_topic is not None:
             narrow.append(["topic", narrow_topic])
 
     register_ret = do_events_register(user_profile, request.client,
@@ -134,7 +135,7 @@ def home_real(request):
 
     # Reset our don't-spam-users-with-email counter since the
     # user has since logged in
-    if not user_profile.last_reminder is None:
+    if user_profile.last_reminder is not None:
         user_profile.last_reminder = None
         user_profile.save(update_fields=["last_reminder"])
 
@@ -339,4 +340,3 @@ def is_buggy_ua(agent):
     """
     return ("Humbug Desktop/" in agent or "Zulip Desktop/" in agent or "ZulipDesktop/" in agent) and \
         "Mac" not in agent
-

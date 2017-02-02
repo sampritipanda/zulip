@@ -80,7 +80,7 @@ Example Inputs:
                 subject=message['subject'],
                 to=message['display_recipient'],
                 content=letter,
-                ))
+            ))
 
     def handle_message(self, message, client, state_handler):
         words = message['content'].split()
@@ -120,9 +120,9 @@ Example Inputs:
             return
 
         if received_json['meta']['code'] == 200:
-            response_msg = ('Food nearby ' + params['near']
-                            + ' coming right up:\n'
-                            + self.format_json(received_json['response']['venues']))
+            response_msg = ('Food nearby ' + params['near'] +
+                            ' coming right up:\n' +
+                            self.format_json(received_json['response']['venues']))
             self.send_info(message, response_msg, client)
             return
 

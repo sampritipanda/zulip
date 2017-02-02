@@ -30,6 +30,7 @@ set_global('page_params', {
 
 add_dependencies({
     marked: 'third/marked/lib/marked.js',
+    emoji_codes: 'generated/emoji/emoji_codes.js',
     emoji: 'js/emoji.js',
     people: 'js/people.js',
     stream_data: 'js/stream_data.js',
@@ -58,11 +59,20 @@ set_global('window', window);
 
 var people = global.people;
 
-people.add({
+var cordelia = {
     full_name: 'Cordelia Lear',
     user_id: 101,
     email: 'cordelia@zulip.com',
+};
+people.add(cordelia);
+
+people.add({
+    full_name: 'Leo',
+    user_id: 102,
+    email: 'leo@zulip.com',
 });
+
+people.initialize_current_user(cordelia.user_id);
 
 var stream_data = global.stream_data;
 var denmark = {
@@ -147,6 +157,20 @@ var bugdown_data = JSON.parse(fs.readFileSync(path.join(__dirname, '../../zerver
       assert.notEqual(test.expected_output, output);
     }
   });
+}());
+
+(function test_message_flags() {
+    var message = {raw_content: '@**Leo**'};
+    echo.apply_markdown(message);
+    assert(!_.contains(message.flags, 'mentioned'));
+
+    message = {raw_content: '@**Cordelia Lear**'};
+    echo.apply_markdown(message);
+    assert(_.contains(message.flags, 'mentioned'));
+
+    message = {raw_content: '@**all**'};
+    echo.apply_markdown(message);
+    assert(_.contains(message.flags, 'mentioned'));
 }());
 
 (function test_marked() {

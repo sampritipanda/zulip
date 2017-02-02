@@ -88,13 +88,13 @@ def gather_hot_conversations(user_profile, stream_messages):
         # We'll display up to 2 messages from the conversation.
         first_few_messages = [user_message.message for user_message in
                               stream_messages.filter(
-                                message__recipient__type_id=stream_id,
-                                message__subject=subject)[:2]]
+                                  message__recipient__type_id=stream_id,
+                                  message__subject=subject)[:2]]
 
         teaser_data = {"participants": users,
                        "count": count - len(first_few_messages),
                        "first_few_messages": build_message_list(
-                        user_profile, first_few_messages)}
+                           user_profile, first_few_messages)}
 
         hot_conversation_render_payloads.append(teaser_data)
     return hot_conversation_render_payloads
@@ -107,8 +107,8 @@ def gather_new_users(user_profile, threshold):
         new_users = [] # type: List[UserProfile]
     else:
         new_users = list(UserProfile.objects.filter(
-                realm=user_profile.realm, date_joined__gt=threshold,
-                is_bot=False))
+            realm=user_profile.realm, date_joined__gt=threshold,
+            is_bot=False))
     user_names = [user.full_name for user in new_users]
 
     return len(user_names), user_names
@@ -119,7 +119,7 @@ def gather_new_streams(user_profile, threshold):
         new_streams = [] # type: List[Stream]
     else:
         new_streams = list(get_active_streams(user_profile.realm).filter(
-                invite_only=False, date_created__gt=threshold))
+            invite_only=False, date_created__gt=threshold))
 
     base_url = u"%s/#narrow/stream/" % (user_profile.realm.uri,)
 
@@ -171,7 +171,7 @@ def handle_digest_email(user_profile_id, cutoff):
     template_payload.update({
         'name': user_profile.full_name,
         'unsubscribe_link': one_click_unsubscribe_link(user_profile, "digest")
-        })
+    })
 
     # Gather recent missed PMs, re-using the missed PM email logic.
     # You can't have an unread message that you sent, but when testing

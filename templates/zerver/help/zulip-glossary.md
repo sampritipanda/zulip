@@ -58,8 +58,9 @@ and **@-mentions**.
 
 ### group PM
 
-Shorthand for **group private message**, a **group PM** is a private message
-sent directly to two or more other users rather than through a [stream](#stream).
+Shorthand for **group private message**, a **group PM** is a
+[private message](#private-message) sent directly to two or more other
+users rather than through a [stream](#stream).
 
 ### home
 
@@ -143,9 +144,12 @@ clicking the chevron of the corresponding stream and clicking **Pin stream
 ### private message
 
 **Private messages** are either **one-on-one** or **group**
-conversations. They can only be seen by users participating in the
-message. To send a private messages to a user, users can search for
-the username or email address.
+conversations, and are only visible to recipients of that message.
+The exception to this is that in corporate organizations,
+[organization administrators](#administrator) may be able to access to
+private messages via compliance exports.  In community organizations,
+even organization cannot access private messages unless they are
+listed recipients of the message.
 
 ### private stream
 

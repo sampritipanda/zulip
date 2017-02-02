@@ -1,6 +1,8 @@
 var admin = (function () {
 
-var meta = {};
+var meta = {
+    loaded: false,
+};
 var exports = {};
 var all_streams = [];
 
@@ -27,6 +29,10 @@ function get_email_for_user_row(row) {
 }
 
 exports.update_user_full_name = function (email, new_full_name) {
+    if (!meta.loaded) {
+        return;
+    }
+
     var user_info = get_user_info(email);
 
     var user_row = user_info.user_row;
@@ -130,6 +136,10 @@ function get_non_default_streams_names(streams_data) {
 }
 
 exports.update_default_streams_table = function () {
+    if (!meta.loaded) {
+        return;
+    }
+
     if ($('#administration').hasClass('active')) {
         $("#admin_default_streams_table").expectOne().find("tr.default_stream_row").remove();
         populate_default_streams(page_params.realm_default_streams);
@@ -155,18 +165,11 @@ function make_stream_default(stream_name) {
     });
 }
 
-function stringify_list_with_conjunction(lst, conjunction) {
-    if (lst.length === 0) {
-        return '';
-    } else if (lst.length === 1) {
-        return lst.toString();
-    } else if (lst.length === 2) {
-        return lst.join(" " + conjunction + " ");
-    }
-    return lst.slice(0, lst.length-1).join(", ") + ", " + conjunction + " " + lst[lst.length-1].toString();
-}
-
 exports.populate_emoji = function (emoji_data) {
+    if (!meta.loaded) {
+        return;
+    }
+
     var emoji_table = $('#admin_emoji_table').expectOne();
     emoji_table.find('tr.emoji_row').remove();
     _.each(emoji_data, function (data, name) {
@@ -182,6 +185,10 @@ exports.populate_emoji = function (emoji_data) {
 };
 
 exports.populate_filters = function (filters_data) {
+    if (!meta.loaded) {
+        return;
+    }
+
     var filters_table = $("#admin_filters_table").expectOne();
     filters_table.find("tr.filter_row").remove();
     _.each(filters_data, function (filter) {
@@ -201,25 +208,39 @@ exports.populate_filters = function (filters_data) {
 };
 
 exports.populate_realm_aliases = function (aliases) {
-    var alias_table = $("#alias_table").expectOne();
+    if (!meta.loaded) {
+        return;
+    }
+
     var domains_list = _.map(page_params.domains, function (ADomain) {
         return ADomain.domain;
     });
-    var domains = stringify_list_with_conjunction(domains_list, "or");
+    var domains = domains_list.join(', ');
+    if (domains.length === 0) {
+        domains = i18n.t("None");
+    }
+    $("#realm_restricted_to_domains_label").text(i18n.t("New users restricted to the following domains: __domains__", {domains: domains}));
 
-    $("#realm_restricted_to_domains_label").text(i18n.t("Users restricted to __domains__", {domains: domains}));
-
-    alias_table.find("tr").remove();
+    var alias_table_body = $("#alias_table tbody").expectOne();
+    alias_table_body.find("tr").remove();
     _.each(aliases, function (alias) {
-        alias_table.append(templates.render("admin_alias_list", {alias: alias}));
+        alias_table_body.append(templates.render("admin-alias-list", {alias: alias}));
     });
 };
 
 exports.reset_realm_default_language = function () {
+    if (!meta.loaded) {
+        return;
+    }
+
     $("#id_realm_default_language").val(page_params.realm_default_language);
 };
 
 exports.populate_auth_methods = function (auth_methods) {
+    if (!meta.loaded) {
+        return;
+    }
+
     var auth_methods_table = $("#admin_auth_methods_table").expectOne();
     auth_methods_table.find('tr.method_row').remove();
     _.each(_.keys(auth_methods).sort(), function (key) {
@@ -295,6 +316,10 @@ function _setup_page() {
         success: populate_streams,
         error: failed_listing_streams,
     });
+
+    // We set this flag before we're fully loaded so that the populate
+    // methods don't short-circuit.
+    meta.loaded = true;
 
     // Populate authentication methods table
     exports.populate_auth_methods(page_params.realm_authentication_methods);
@@ -578,16 +603,7 @@ function _setup_page() {
                 }
                 if (response_data.restricted_to_domain !== undefined) {
                     if (response_data.restricted_to_domain) {
-                        var atdomains = _.map(page_params.domains, function (ADomain) {
-                            return ADomain.domain;
-                        });
-                        var i;
-                        for (i = 0; i < atdomains.length; i += 1) {
-                            atdomains[i] = '@' + atdomains[i];
-                        }
-                        var atdomains_string = stringify_list_with_conjunction(atdomains, "or");
-
-                        ui.report_success(i18n.t("New users must have e-mails ending in __atdomains_string__!", {atdomains_string: atdomains_string}), restricted_to_domain_status);
+                        ui.report_success(i18n.t("New user e-mails now restricted to certain domains!"), restricted_to_domain_status);
                     } else {
                         ui.report_success(i18n.t("New users may have arbitrary e-mails!"), restricted_to_domain_status);
                     }
@@ -656,6 +672,16 @@ function _setup_page() {
                     if (response_data.waiting_period_threshold > 0) {
                         ui.report_success(i18n.t("waiting period threshold changed!"), waiting_period_threshold_status);
                     }
+                }
+                // Check if no changes made
+                var no_changes_made = true;
+                for (var key in response_data) {
+                    if (['msg', 'result'].indexOf(key) < 0) {
+                        no_changes_made = false;
+                    }
+                }
+                if (no_changes_made) {
+                    ui.report_success(i18n.t("No changes to save!"), name_status);
                 }
             },
             error: function (xhr) {
@@ -910,7 +936,8 @@ function _setup_page() {
     });
 
     $("#alias_table").on("click", ".delete_alias", function () {
-        var url = "/json/realm/domains/" + $(this).data('id');
+        var domain = $(this).parents("tr").find(".domain").text();
+        var url = "/json/realm/domains/" + domain;
         var aliases_info = $("#realm_aliases_modal").find(".aliases_info");
 
         channel.del({
@@ -931,7 +958,7 @@ function _setup_page() {
     $("#add_alias").click(function () {
         var aliases_info = $("#realm_aliases_modal").find(".aliases_info");
         var data = {
-            domain: $("#new_alias").val(),
+            domain: JSON.stringify($("#new_alias").val()),
         };
 
         channel.post({

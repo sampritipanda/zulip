@@ -373,9 +373,9 @@ def narrow_parameter(json):
 
         # We have to support a legacy tuple format.
         if isinstance(elem, list):
-            if (len(elem) != 2
-                or any(not isinstance(x, str) and not isinstance(x, Text)
-                       for x in elem)):
+            if (len(elem) != 2 or
+                any(not isinstance(x, str) and not isinstance(x, Text)
+                    for x in elem)):
                 raise ValueError("element is not a string pair")
             return dict(operator=elem[0], operand=elem[1])
 
@@ -867,10 +867,6 @@ def send_message_backend(request, user_profile,
                              local_id=local_id, sender_queue_id=queue_id)
     return json_success({"id": ret})
 
-def json_update_message(request, user_profile, message_id):
-    # type: (HttpRequest, UserProfile, int) -> HttpResponse
-    return update_message_backend(request, user_profile)
-
 @has_request_variables
 def update_message_backend(request, user_profile,
                            message_id=REQ(converter=to_non_negative_int),
@@ -928,9 +924,13 @@ def update_message_backend(request, user_profile,
         # probably are not relevant for reprocessed alert_words,
         # mentions and similar rendering features.  This may be a
         # decision we change in the future.
-        ums = UserMessage.objects.filter(message=message.id,
-                                         flags=~UserMessage.flags.historical)
-        message_users = {get_user_profile_by_id(um.user_profile_id) for um in ums}
+        ums = UserMessage.objects.filter(
+            message=message.id,
+            flags=~UserMessage.flags.historical)
+
+        message_users = UserProfile.objects.select_related().filter(
+            id__in={um.user_profile_id for um in ums})
+
         # We render the message using the current user's realm; since
         # the cross-realm bots never edit messages, this should be
         # always correct.
@@ -941,7 +941,10 @@ def update_message_backend(request, user_profile,
                                                    user_profile.realm)
         links_for_embed |= message.links_for_preview
 
-    do_update_message(user_profile, message, subject, propagate_mode, content, rendered_content)
+    number_changed = do_update_message(user_profile, message, subject,
+                                       propagate_mode, content, rendered_content)
+    # Include the number of messages changed in the logs
+    request._log_data['extra'] = "[%s]" % (number_changed,)
     if links_for_embed and getattr(settings, 'INLINE_URL_EMBED_PREVIEW', None):
         event_data = {
             'message_id': message.id,

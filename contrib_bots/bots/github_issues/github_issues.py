@@ -6,7 +6,9 @@ import json
 import os
 import requests
 import six.moves.configparser
-import urllib.request, urllib.error, urllib.parse
+import urllib.error
+import urllib.parse
+import urllib.request
 
 class IssueHandler(object):
     '''
@@ -83,12 +85,12 @@ class IssueHandler(object):
 
         # Creates the issue json, that is transmitted to the github api servers
         issue = {
-                 'title': new_issue_title,
-                 'body': '{} **Sent by [{}](https://chat.zulip.org/#) from zulip**'.format(issue_content, original_sender),
-                 'assignee': '',
-                 'milestone': 'none',
-                 'labels': [''],
-                }
+            'title': new_issue_title,
+            'body': '{} **Sent by [{}](https://chat.zulip.org/#) from zulip**'.format(issue_content, original_sender),
+            'assignee': '',
+            'milestone': 'none',
+            'labels': [''],
+        }
         # Sends the HTTP post request
         r = session.post(url_new, json.dumps(issue))
 

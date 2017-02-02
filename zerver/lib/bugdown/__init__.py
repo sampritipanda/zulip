@@ -735,7 +735,7 @@ def fixup_link(link, target_blank=True):
     """Set certain attributes we want on every link."""
     if target_blank:
         link.set('target', '_blank')
-    link.set('title',  url_filename(link.get('href')))
+    link.set('title', url_filename(link.get('href')))
 
 
 def sanitize_url(url):
@@ -1196,7 +1196,7 @@ realm_filter_data = {} # type: Dict[int, List[Tuple[Text, Text, int]]]
 
 class EscapeHtml(markdown.Extension):
     def extendMarkdown(self, md, md_globals):
-    # type: (markdown.Markdown, Dict[str, Any]) -> None
+        # type: (markdown.Markdown, Dict[str, Any]) -> None
         del md.preprocessors['html_block']
         del md.inlinePatterns['html']
 
@@ -1205,16 +1205,16 @@ def make_md_engine(key, opts):
     md_engines[key] = markdown.Markdown(
         output_format = 'html',
         extensions    = [
-                         'markdown.extensions.nl2br',
-                         'markdown.extensions.tables',
-                         codehilite.makeExtension(
-                                linenums=False,
-                                guess_lang=False
-                         ),
-                         fenced_code.makeExtension(),
-                         EscapeHtml(),
-                         Bugdown(realm_filters=opts["realm_filters"][0],
-                                 realm=opts["realm"][0])])
+            'markdown.extensions.nl2br',
+            'markdown.extensions.tables',
+            codehilite.makeExtension(
+                linenums=False,
+                guess_lang=False
+            ),
+            fenced_code.makeExtension(),
+            EscapeHtml(),
+            Bugdown(realm_filters=opts["realm_filters"][0],
+                    realm=opts["realm"][0])])
 
 def subject_links(realm_filters_key, subject):
     # type: (int, Text) -> List[Text]
@@ -1337,11 +1337,11 @@ def do_convert(content, message=None, message_realm=None, possible_words=None):
         if possible_words is None:
             possible_words = set() # Set[Text]
 
-        db_data = {'possible_words':    possible_words,
-                   'full_names':        dict((user['full_name'].lower(), user) for user in realm_users),
-                   'short_names':       dict((user['short_name'].lower(), user) for user in realm_users),
-                   'emoji':             message_realm.get_emoji(),
-                   'stream_names':      dict((stream['name'], stream) for stream in realm_streams)}
+        db_data = {'possible_words': possible_words,
+                   'full_names': dict((user['full_name'].lower(), user) for user in realm_users),
+                   'short_names': dict((user['short_name'].lower(), user) for user in realm_users),
+                   'emoji': message_realm.get_emoji(),
+                   'stream_names': dict((stream['name'], stream) for stream in realm_streams)}
 
     try:
         # Spend at most 5 seconds rendering.
@@ -1362,9 +1362,9 @@ def do_convert(content, message=None, message_realm=None, possible_words=None):
             error_bot_realm = get_user_profile_by_email(settings.ERROR_BOT).realm
             internal_send_message(error_bot_realm, settings.ERROR_BOT, "stream",
                                   "errors", subject, "Markdown parser failed, email sent with details.")
-        mail.mail_admins(subject, "Failed message: %s\n\n%s\n\n" % (
-                                    cleaned, traceback.format_exc()),
-                         fail_silently=False)
+        mail.mail_admins(
+            subject, "Failed message: %s\n\n%s\n\n" % (cleaned, traceback.format_exc()),
+            fail_silently=False)
         raise BugdownRenderingException()
     finally:
         current_message = None

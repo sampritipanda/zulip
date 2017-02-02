@@ -1,1 +1,1 @@
-tab of the [Administration](/help/edit-administrator-settings) page.
+tab of the [Administration](/help/change-your-organization-settings) page.

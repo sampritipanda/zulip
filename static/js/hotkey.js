@@ -118,6 +118,13 @@ function process_hotkey(e) {
         return false;
     }
 
+    if ($(e.target).is(".editable-section")) {
+        if (event_name === "enter") {
+            $(e.target).parent().find(".checkmark").click();
+        }
+        return false;
+    }
+
     var tab_list = tab_up_down(e);
     if (tab_list.flag) {
         if (hotkey.name === "up_arrow") {
@@ -201,6 +208,11 @@ function process_hotkey(e) {
         } else if ($("#draft_overlay").is(":visible")) {
             $("#draft_overlay").click();
             return true;
+        } else if ($('#markdown-help').hasClass('in') ||
+            $('#keyboard-shortcuts').hasClass('in') ||
+            $('#search-operators').hasClass('in') ||
+            $('#invite-user').hasClass('in')) {
+            return false;
         }
     }
 

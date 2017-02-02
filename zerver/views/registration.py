@@ -132,7 +132,7 @@ def accounts_register(request):
             # zephyr mirroring realm.
             hesiod_name = compute_mit_user_fullname(email)
             form = RegistrationForm(
-                    initial={'full_name': hesiod_name if "@" not in hesiod_name else ""})
+                initial={'full_name': hesiod_name if "@" not in hesiod_name else ""})
             name_validated = True
         elif settings.POPULATE_PROFILE_VIA_LDAP:
             for backend in get_backends():
@@ -304,7 +304,7 @@ def create_realm(request, creation_key=None):
                                       {'message': _('New organization creation disabled.')})
         elif not check_key_is_valid(creation_key):
             return render_to_response("zerver/realm_creation_failed.html",
-                                      {'message': _('The organization creation link has been expired'
+                                      {'message': _('The organization creation link has expired'
                                                     ' or is not valid.')})
 
     # When settings.OPEN_REALM_CREATION is enabled, anyone can create a new realm,

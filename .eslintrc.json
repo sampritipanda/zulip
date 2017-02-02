@@ -93,6 +93,7 @@
         "unread_ui": false,
         "user_events": false,
         "Plotly": false,
+        "emoji_codes": false,
         "drafts": false
     },
     "rules": {

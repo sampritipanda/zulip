@@ -61,7 +61,7 @@ def get_recipient_id_for_stream_name(realm, stream_name):
 
 def mute_stream(realm, user_profile, stream_name):
     # type: (Realm, Text, Text) -> None
-    stream = Stream.objects.get(realm=realm, name=stream_name)
+    stream = get_stream(stream_name, realm)
     recipient = Recipient.objects.get(type_id=stream.id, type=Recipient.STREAM)
     subscription = Subscription.objects.get(recipient=recipient, user_profile=user_profile)
     subscription.in_home_view = False
@@ -470,8 +470,8 @@ class GetOldMessagesTest(ZulipTestCase):
             return ','.join(sorted(set([r['email'] for r in dr] + [me])))
 
         personals = [m for m in get_user_messages(get_user_profile_by_email(me))
-                     if m.recipient.type == Recipient.PERSONAL
-                     or m.recipient.type == Recipient.HUDDLE]
+                     if m.recipient.type == Recipient.PERSONAL or
+                     m.recipient.type == Recipient.HUDDLE]
         if not personals:
             # FIXME: This is bad.  We should use test data that is guaranteed
             # to contain some personals for every user.  See #617.

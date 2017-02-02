@@ -9,7 +9,7 @@ from zproject import dev_urls
 from zproject.legacy_urls import legacy_urls
 from zerver.views.integrations import IntegrationView, APIView, HelpView
 from zerver.lib.integrations import WEBHOOK_INTEGRATIONS
-from zerver.views.webhooks import github_dispatcher
+from zerver.webhooks import github_dispatcher
 
 
 from django.contrib.auth.views import (login, password_reset,
@@ -116,7 +116,7 @@ i18n_urls = [
 
     # Login/registration
     url(r'^register/$', zerver.views.registration.accounts_home, name='register'),
-    url(r'^login/$',  zerver.views.auth.login_page, {'template_name': 'zerver/login.html'}, name='zerver.views.auth.login_page'),
+    url(r'^login/$', zerver.views.auth.login_page, {'template_name': 'zerver/login.html'}, name='zerver.views.auth.login_page'),
 
     # A registration page that passes through the domain, for totally open realms.
     url(r'^register/(?P<realm_str>\S+)/$', zerver.views.registration.accounts_home_with_realm_str,
@@ -141,7 +141,7 @@ i18n_urls = [
 
 # If a Terms of Service is supplied, add that route
 if settings.TERMS_OF_SERVICE is not None:
-    i18n_urls += [url(r'^terms/$',   TemplateView.as_view(template_name='zerver/terms.html'))]
+    i18n_urls += [url(r'^terms/$', TemplateView.as_view(template_name='zerver/terms.html'))]
 
 # Make a copy of i18n_urls so that they appear without prefix for english
 urls = list(i18n_urls)
@@ -168,7 +168,7 @@ v1_api_and_json_patterns = [
     url(r'^realm/domains$', rest_dispatch,
         {'GET': 'zerver.views.realm_aliases.list_aliases',
          'POST': 'zerver.views.realm_aliases.create_alias'}),
-    url(r'^realm/domains/(?P<alias_id>\d+)$', rest_dispatch,
+    url(r'^realm/domains/(?P<domain>\S+)$', rest_dispatch,
         {'DELETE': 'zerver.views.realm_aliases.delete_alias'}),
 
     # realm/emoji -> zerver.views.realm_emoji
@@ -207,11 +207,10 @@ v1_api_and_json_patterns = [
     # GET returns messages, possibly filtered, POST sends a message
     url(r'^messages$', rest_dispatch,
         {'GET': 'zerver.views.messages.get_old_messages_backend',
-         'PATCH': 'zerver.views.messages.update_message_backend',
          'POST': 'zerver.views.messages.send_message_backend'}),
     url(r'^messages/(?P<message_id>[0-9]+)$', rest_dispatch,
         {'GET': 'zerver.views.messages.json_fetch_raw_message',
-         'PATCH': 'zerver.views.messages.json_update_message'}),
+         'PATCH': 'zerver.views.messages.update_message_backend'}),
     url(r'^messages/render$', rest_dispatch,
         {'POST': 'zerver.views.messages.render_message_backend'}),
     url(r'^messages/flags$', rest_dispatch,
@@ -296,9 +295,7 @@ v1_api_and_json_patterns = [
     url(r'^streams/(?P<stream_id>\d+)/members$', rest_dispatch,
         {'GET': 'zerver.views.streams.get_subscribers_backend'}),
     url(r'^streams/(?P<stream_id>\d+)$', rest_dispatch,
-        {'HEAD': 'zerver.views.streams.stream_exists_backend',
-         'GET': 'zerver.views.streams.stream_exists_backend',
-         'PATCH': 'zerver.views.streams.update_stream_backend',
+        {'PATCH': 'zerver.views.streams.update_stream_backend',
          'DELETE': 'zerver.views.streams.deactivate_stream_backend'}),
     url(r'^default_streams$', rest_dispatch,
         {'POST': 'zerver.views.streams.add_default_stream',

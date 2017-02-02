@@ -31,11 +31,11 @@ class Command(BaseCommand):
         # Has been active (on the website, for now) in the last 7 days.
         activity_cutoff = datetime.datetime.now(tz=pytz.utc) - datetime.timedelta(days=7)
         return [activity.user_profile for activity in (
-                    UserActivity.objects.filter(user_profile__realm=realm,
-                                                user_profile__is_active=True,
-                                                last_visit__gt=activity_cutoff,
-                                                query="/json/users/me/pointer",
-                                                client__name="website"))]
+            UserActivity.objects.filter(user_profile__realm=realm,
+                                        user_profile__is_active=True,
+                                        last_visit__gt=activity_cutoff,
+                                        query="/json/users/me/pointer",
+                                        client__name="website"))]
 
     def messages_sent_by(self, user, days_ago):
         # type: (UserProfile, int) -> int
@@ -121,7 +121,7 @@ class Command(BaseCommand):
                 print("%d messages sent via the API" % (self.api_messages(realm, days_ago),))
                 print("%d group private messages" % (self.group_private_messages(realm, days_ago),))
 
-            num_notifications_enabled = len([x for x in active_users if x.enable_desktop_notifications == True])
+            num_notifications_enabled = len([x for x in active_users if x.enable_desktop_notifications])
             self.report_percentage(num_notifications_enabled, num_active,
                                    "active users have desktop notifications enabled")
 

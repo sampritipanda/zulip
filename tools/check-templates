@@ -76,21 +76,21 @@ def check_html_templates(templates, modified_only, all_dups):
         'register',
     ]
     bad_ids_dict = {ids: fns for ids, fns in template_id_dict.items()
-                    if (not ids in IGNORE_IDS) and len(fns) > 1}
+                    if (ids not in IGNORE_IDS) and len(fns) > 1}
 
     if all_dups:
         ignorable_ids_dict = {ids: fns for ids, fns in template_id_dict.items()
                               if ids in IGNORE_IDS and len(fns) > 1}
 
         for ids, fns in ignorable_ids_dict.items():
-            logging.warning("Duplicate ID(s) detected :Id '" + ids
-                            + "' present at following files:")
+            logging.warning("Duplicate ID(s) detected :Id '" + ids +
+                            "' present at following files:")
             for fn in fns:
                 print(fn)
 
     for ids, fns in bad_ids_dict.items():
-        logging.error("Duplicate ID(s) detected :Id '" + ids
-                      + "' present at following files:")
+        logging.error("Duplicate ID(s) detected :Id '" + ids +
+                      "' present at following files:")
         for fn in fns:
             print(fn)
 
@@ -112,7 +112,6 @@ def check_html_templates(templates, modified_only, all_dups):
             'templates/confirmation/confirm.html',
             'templates/corporate/mit.html',
             'templates/corporate/privacy.html',
-            'templates/corporate/terms-enterprise.html',
             'templates/corporate/zephyr-mirror.html',
             'templates/corporate/zephyr.html',
             'templates/zerver/accounts_home.html',
@@ -134,6 +133,11 @@ def check_html_templates(templates, modified_only, all_dups):
             'templates/zerver/register.html',
             'templates/zerver/right-sidebar.html',
             'templates/zerver/search_operators.html',
+
+            'zerver/webhooks/deskdotcom/doc.html',
+            'zerver/webhooks/freshdesk/doc.html',
+            'zerver/webhooks/taiga/doc.html',
+            'zerver/webhooks/zendesk/doc.html',
         ]
         validate(fn=fn, check_indent=(fn not in bad_files))
 

@@ -11,7 +11,7 @@ central panel of your browser window.
 ### Search bar
 The **search bar** is located at the top of the central panel. This feature
 allows you to narrow your view to show specific messages using
-[search constraints](/help/searching-for-messages).
+[search constraints](/help/search-for-messages).
 
 !!! tip ""
     If your current filter is not the **Home** view, clicking on the home ((<i
@@ -73,7 +73,7 @@ that you are subscribed to.
     * Clicking the magnifying glass (<i class="icon-vector-search"></i>) icon
     reveals an input that allows you to search for streams.
     * Clicking the cog (<i class="icon-vector-cog"></i>) icon allows you to
-    [navigate](/help/browse-and-join-streams#browse-streams) to the
+    [navigate](/help/browse-and-subscribe-to-streams#browse-streams) to the
     [Subscriptions](/#subscriptions) page.
 * Hovering over a stream in the **Streams** section reveals a
 chevron that allows you to modify the stream's settings when you click on it.

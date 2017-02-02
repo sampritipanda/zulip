@@ -85,10 +85,9 @@ def run_message_handler_for_bot(lib_module, quiet, config_file):
                 message=message,
                 client=restricted_client,
                 state_handler=state_handler
-                )
+            )
 
     signal.signal(signal.SIGINT, exit_gracefully)
 
     logging.info('starting message handling...')
     client.call_on_each_message(handle_message)
-
