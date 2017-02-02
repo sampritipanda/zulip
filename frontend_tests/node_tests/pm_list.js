@@ -5,6 +5,7 @@ add_dependencies({
     templates: 'js/templates',
     hashchange: 'js/hashchange',
     narrow: 'js/narrow',
+    util: 'js/util',
     people: 'js/people',
 });
 
