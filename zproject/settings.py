@@ -18,6 +18,7 @@ import sys
 import six.moves.configparser
 
 from zerver.lib.db import TimeTrackingConnection
+import zerver.lib.logging_util
 import six
 
 ########################################################################
@@ -107,6 +108,7 @@ DEFAULT_SETTINGS = {'TWITTER_CONSUMER_KEY': '',
                     'EMAIL_GATEWAY_IMAP_PORT': None,
                     'EMAIL_GATEWAY_IMAP_FOLDER': None,
                     'EMAIL_GATEWAY_EXTRA_PATTERN_HACK': None,
+                    'EMAIL_HOST': None,
                     'S3_KEY': '',
                     'S3_SECRET_KEY': '',
                     'S3_AVATAR_BUCKET': '',
@@ -177,7 +179,10 @@ DEFAULT_SETTINGS = {'TWITTER_CONSUMER_KEY': '',
                     'DBX_APNS_CERT_FILE': None,
                     'DBX_APNS_KEY_FILE': None,
                     'PERSONAL_ZMIRROR_SERVER': None,
-                    'EXTRA_INSTALLED_APPS': [],
+                    # Structurally, we will probably eventually merge
+                    # analytics into part of the main server, rather
+                    # than a separate app.
+                    'EXTRA_INSTALLED_APPS': ['analytics'],
                     'DEFAULT_NEW_REALM_STREAMS': {
                         "social": {"description": "For socializing", "invite_only": False},
                         "general": {"description": "For general stuff", "invite_only": False},
@@ -192,6 +197,7 @@ DEFAULT_SETTINGS = {'TWITTER_CONSUMER_KEY': '',
                     'POST_MIGRATION_CACHE_FLUSHING': False,
                     'ENABLE_FILE_LINKS': False,
                     'USE_WEBSOCKETS': True,
+                    'ANALYTICS_LOCK_DIR': "/home/zulip/deployments/analytics-lock-dir",
                     'PASSWORD_MIN_LENGTH': 6,
                     'PASSWORD_MIN_ZXCVBN_QUALITY': 0.5,
                     }
@@ -371,7 +377,7 @@ RUNNING_INSIDE_TORNADO = False
 ########################################################################
 
 DATABASES = {"default": {
-    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'ENGINE': 'django.db.backends.postgresql',
     'NAME': 'zulip',
     'USER': 'zulip',
     'PASSWORD': '', # Authentication done via certificates
@@ -637,6 +643,8 @@ else:
     else:
         STATIC_ROOT = os.path.abspath('prod-static/serve')
 
+# If changing this, you need to also the hack modifications to this in
+# our compilemessages management command.
 LOCALE_PATHS = (os.path.join(STATIC_ROOT, 'locale'),)
 
 # We want all temporary uploaded files to be stored on disk.
@@ -686,6 +694,7 @@ PIPELINE = {
                 'styles/settings.css',
                 'styles/subscriptions.css',
                 'styles/drafts.css',
+                'styles/informational-overlays.css',
                 'styles/compose.css',
                 'styles/reactions.css',
                 'styles/left-sidebar.css',
@@ -708,6 +717,7 @@ PIPELINE = {
                 'styles/settings.css',
                 'styles/subscriptions.css',
                 'styles/drafts.css',
+                'styles/informational-overlays.css',
                 'styles/compose.css',
                 'styles/reactions.css',
                 'styles/left-sidebar.css',
@@ -749,6 +759,13 @@ JS_SPECS = {
             'node_modules/jquery-validation/dist/jquery.validate.js',
         ],
         'output_filename': 'min/signup.js'
+    },
+    'zxcvbn': {
+        'source_filenames': [],
+        'minifed_source_filenames': [
+            'node_modules/zxcvbn/dist/zxcvbn.js',
+        ],
+        'output_filename': 'min/zxcvbn.js'
     },
     'api': {
         'source_filenames': ['js/portico/api.js'],
@@ -839,6 +856,7 @@ JS_SPECS = {
             'js/message_flags.js',
             'js/alert_words.js',
             'js/alert_words_ui.js',
+            'js/attachments_ui.js',
             'js/message_store.js',
             'js/server_events.js',
             'js/zulip.js',
@@ -869,10 +887,10 @@ JS_SPECS = {
     'stats': {
         'source_filenames': [
             'node_modules/jquery/dist/jquery.js',
-            'js/portico/stats.js',
+            'js/stats/stats.js',
         ],
         'minifed_source_filenames': [
-            'node_modules/plotly.js/dist/plotly.min.js',
+            'node_modules/plotly.js/dist/plotly-basic.min.js',
         ],
         'output_filename': 'min/stats.js'
     },
@@ -951,11 +969,18 @@ LOGGING = {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
         },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
         'nop': {
             '()': 'zerver.lib.logging_util.ReturnTrue',
         },
         'require_really_deployed': {
             '()': 'zerver.lib.logging_util.RequireReallyDeployed',
+        },
+        'skip_200_and_304': {
+            '()': 'django.utils.log.CallbackFilter',
+            'callback': zerver.lib.logging_util.skip_200_and_304,
         },
     },
     'handlers': {
@@ -1018,6 +1043,17 @@ LOGGING = {
         },
         'django.security.DisallowedHost': {
             'handlers': ['file'],
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console', 'file'],
+            'propagate': False,
+            'filters': ['skip_200_and_304'],
+        },
+        'django.template': {
+            'handlers': ['console'],
+            'filters': ['require_debug_true'],
+            'level': 'DEBUG',
             'propagate': False,
         },
         ## Uncomment the following to get all database queries logged to the console

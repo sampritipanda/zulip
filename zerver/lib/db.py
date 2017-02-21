@@ -4,7 +4,7 @@ import time
 from psycopg2.extensions import cursor, connection
 
 from typing import Callable, Optional, Iterable, Any, Dict, Union, TypeVar, \
-    Mapping, Sequence, Text
+    Mapping, Text
 from zerver.lib.str_utils import NonBinaryStr
 
 CursorObj = TypeVar('CursorObj', bound=cursor)
@@ -13,7 +13,7 @@ ParamsT = Union[Iterable[Any], Mapping[Text, Any]]
 # Similar to the tracking done in Django's CursorDebugWrapper, but done at the
 # psycopg2 cursor level so it works with SQLAlchemy.
 def wrapper_execute(self, action, sql, params=()):
-    # type: (CursorObj, Callable[[NonBinaryStr, Optional[ParamsT]], CursorObj], NonBinaryStr, ParamsT) -> CursorObj
+    # type: (CursorObj, Callable[[NonBinaryStr, Optional[ParamsT]], CursorObj], NonBinaryStr, Optional[ParamsT]) -> CursorObj
     start = time.time()
     try:
         return action(sql, params)
@@ -39,7 +39,7 @@ class TimeTrackingConnection(connection):
     """A psycopg2 connection class that uses TimeTrackingCursors."""
 
     def __init__(self, *args, **kwargs):
-        # type: (Sequence[Any], Mapping[Text, Any]) -> None
+        # type: (*Any, **Any) -> None
         self.queries = [] # type: List[Dict[str, str]]
         super(TimeTrackingConnection, self).__init__(*args, **kwargs)
 

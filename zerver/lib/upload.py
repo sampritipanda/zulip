@@ -18,6 +18,7 @@ from boto.s3.key import Key
 from boto.s3.connection import S3Connection
 from mimetypes import guess_type, guess_extension
 
+from zerver.lib.str_utils import force_bytes, force_str
 from zerver.models import get_user_profile_by_email, get_user_profile_by_id
 from zerver.models import Attachment
 from zerver.models import Realm, UserProfile, Message
@@ -141,18 +142,18 @@ def upload_image_to_s3(
     # type: (NonBinaryStr, Text, Optional[Text], UserProfile, binary_type) -> None
 
     conn = S3Connection(settings.S3_KEY, settings.S3_SECRET_KEY)
-    bucket = get_bucket(conn, force_str(bucket_name))
+    bucket = get_bucket(conn, bucket_name)
     key = Key(bucket)
     key.key = force_str(file_name)
     key.set_metadata("user_profile_id", str(user_profile.id))
     key.set_metadata("realm_id", str(user_profile.realm_id))
 
     if content_type is not None:
-        headers = {'Content-Type': force_str(content_type)}
+        headers = {u'Content-Type': content_type}  # type: Optional[Dict[Text, Text]]
     else:
         headers = None
 
-    key.set_contents_from_string(contents, headers=headers)
+    key.set_contents_from_string(force_str(contents), headers=headers)
 
 def get_file_info(request, user_file):
     # type: (HttpRequest, File) -> Tuple[Text, Optional[Text]]
@@ -190,8 +191,10 @@ class S3UploadBackend(ZulipUploadBackend):
     def upload_message_image(self, uploaded_file_name, content_type, file_data, user_profile, target_realm=None):
         # type: (Text, Optional[Text], binary_type, UserProfile, Optional[Realm]) -> Text
         bucket_name = settings.S3_AUTH_UPLOADS_BUCKET
+        if target_realm is None:
+            target_realm = user_profile.realm
         s3_file_name = "/".join([
-            str(target_realm.id if target_realm is not None else user_profile.realm_id),
+            str(target_realm.id),
             random_name(18),
             sanitize_name(uploaded_file_name)
         ])
@@ -274,9 +277,9 @@ class S3UploadBackend(ZulipUploadBackend):
 
         bucket_name = settings.S3_AVATAR_BUCKET
         conn = S3Connection(settings.S3_KEY, settings.S3_SECRET_KEY)
-        bucket = get_bucket(conn, force_str(bucket_name))
+        bucket = get_bucket(conn, bucket_name)
         key = bucket.get_key(email_hash)
-        image_data = key.get_contents_as_string()
+        image_data = force_bytes(key.get_contents_as_string())
 
         resized_medium = resize_avatar(image_data, MEDIUM_AVATAR_SIZE)
         upload_image_to_s3(

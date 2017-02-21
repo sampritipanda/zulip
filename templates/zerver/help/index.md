@@ -56,6 +56,7 @@ as an **organization**.
 * [View an image at full size](/help/view-an-image-at-full-size)
 * [Collapse a message](/help/collapse-a-message)
 * [Star a message](/help/star-a-message)
+* [Add an emoji reaction to a message](/help/add-an-emoji-reaction-to-a-message)
 * [Share a message or conversation](/help/share-a-message-or-conversation)
 * [Search for messages](/help/search-for-messages)
 ### Editing

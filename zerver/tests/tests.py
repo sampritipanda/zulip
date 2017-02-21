@@ -25,7 +25,7 @@ from zerver.models import UserProfile, Recipient, \
     get_user_profile_by_email, get_realm, get_client, get_stream, \
     Message, get_unique_open_realm, completely_open
 
-from zerver.lib.avatar import get_avatar_url
+from zerver.lib.avatar import avatar_url
 from zerver.lib.initial_password import initial_password
 from zerver.lib.email_mirror import create_missed_message_address
 from zerver.lib.actions import \
@@ -36,7 +36,6 @@ from zerver.lib.actions import \
 from zerver.lib.notifications import handle_missedmessage_emails
 from zerver.lib.session_user import get_session_dict_user
 from zerver.middleware import is_slow_query
-from zerver.lib.avatar import avatar_url
 from zerver.lib.utils import split_by
 
 from zerver.worker import queue_processors
@@ -252,15 +251,6 @@ class RealmTest(ZulipTestCase):
         realm = get_realm('zulip')
         self.assertEqual(realm.default_language, new_lang)
 
-        # Test setting zh_CN, we set zh_HANS instead of zh_CN in db
-        chinese = "zh_CN"
-        simplified_chinese = "zh_HANS"
-        req = dict(default_language=ujson.dumps(chinese))
-        result = self.client_patch('/json/realm', req)
-        self.assert_json_success(result)
-        realm = get_realm('zulip')
-        self.assertEqual(realm.default_language, simplified_chinese)
-
         # Test to make sure that when invalid languages are passed
         # as the default realm language, correct validation error is
         # raised and the invalid language is not saved in db
@@ -379,6 +369,14 @@ class PermissionTest(ZulipTestCase):
         req = dict(full_name=ujson.dumps(new_name))
         result = self.client_patch('/json/users/hamlet@zulip.com', req)
         self.assert_json_error(result, 'Name too long!')
+
+    def test_admin_cannot_set_full_name_with_invalid_characters(self):
+        # type: () -> None
+        new_name = 'Opheli*'
+        self.login('iago@zulip.com')
+        req = dict(full_name=ujson.dumps(new_name))
+        result = self.client_patch('/json/users/hamlet@zulip.com', req)
+        self.assert_json_error(result, 'Invalid characters in name!')
 
 class ZephyrTest(ZulipTestCase):
     def test_webathena_kerberos_login(self):
@@ -715,6 +713,23 @@ class ActivateTest(ZulipTestCase):
         user = get_user_profile_by_email('hamlet@zulip.com')
         self.assertTrue(user.is_active)
 
+    def test_api_me_user(self):
+        # type: () -> None
+        """This test helps ensure that our URL patterns for /users/me URLs
+        handle email addresses starting with "me" correctly."""
+        self.register("me@zulip.com", "testpassword")
+        self.login('iago@zulip.com')
+
+        result = self.client_delete('/json/users/me@zulip.com')
+        self.assert_json_success(result)
+        user = get_user_profile_by_email('me@zulip.com')
+        self.assertFalse(user.is_active)
+
+        result = self.client_post('/json/users/me@zulip.com/reactivate')
+        self.assert_json_success(result)
+        user = get_user_profile_by_email('me@zulip.com')
+        self.assertTrue(user.is_active)
+
     def test_api_with_nonexistent_user(self):
         # type: () -> None
         admin = get_user_profile_by_email('othello@zulip.com')
@@ -824,6 +839,7 @@ class BotTest(ZulipTestCase):
         self.assertEqual(len(bots), 1)
         bot = bots[0]
         self.assertEqual(bot['bot_owner'], 'hamlet@zulip.com')
+        self.assertEqual(bot['user_id'], get_user_profile_by_email('hambot-bot@zulip.com').id)
 
     def test_add_bot_with_username_in_use(self):
         # type: () -> None
@@ -1182,6 +1198,7 @@ class BotTest(ZulipTestCase):
         bot = self.get_bot()
         self.assertEqual('Fred', bot['full_name'])
 
+    @override_settings(LOCAL_UPLOADS_DIR='var/bot_avatar')
     def test_patch_bot_avatar(self):
         # type: () -> None
         self.login("hamlet@zulip.com")
@@ -1203,12 +1220,16 @@ class BotTest(ZulipTestCase):
                 dict(file1=fp1, file2=fp2))
         self.assert_json_error(result, 'You may only upload one file at a time')
 
+        profile = get_user_profile_by_email("hambot-bot@zulip.com")
+        self.assertEqual(profile.avatar_version, 1)
+
         # HAPPY PATH
         with get_test_image_file('img.png') as fp:
             result = self.client_patch_multipart(
                 '/json/bots/hambot-bot@zulip.com',
                 dict(file=fp))
             profile = get_user_profile_by_email('hambot-bot@zulip.com')
+            self.assertEqual(profile.avatar_version, 2)
             # Make sure that avatar image that we've uploaded is same with avatar image in the server
             self.assertTrue(filecmp.cmp(fp.name,
                                         os.path.splitext(avatar_disk_path(profile))[0] +
@@ -1618,6 +1639,16 @@ class ChangeSettingsTest(ZulipTestCase):
                                        dict(full_name='x' * 1000))
         self.assert_json_error(json_result, 'Name too long!')
 
+    def test_illegal_characters_in_name_changes(self):
+        # type: () -> None
+        email = 'hamlet@zulip.com'
+        self.login(email)
+
+        # Now try a name with invalid characters
+        json_result = self.client_post("/json/settings/change",
+                                       dict(full_name='Opheli*'))
+        self.assert_json_error(json_result, 'Invalid characters in name!')
+
     # This is basically a don't-explode test.
     def test_notify_settings(self):
         # type: () -> None
@@ -1818,7 +1849,7 @@ class GetProfileTest(ZulipTestCase):
             if user['email'] == 'hamlet@zulip.com':
                 self.assertEqual(
                     user['avatar_url'],
-                    get_avatar_url(user_profile.avatar_source, user_profile.email),
+                    avatar_url(user_profile),
                 )
 
 class HomeTest(ZulipTestCase):
@@ -1846,6 +1877,7 @@ class HomeTest(ZulipTestCase):
         # Keep this list sorted!!!
         expected_keys = [
             "alert_words",
+            "attachments",
             "autoscroll_forever",
             "avatar_source",
             "avatar_url",
@@ -1960,8 +1992,8 @@ class HomeTest(ZulipTestCase):
     def _get_home_page(self, **kwargs):
         # type: (**Any) -> HttpResponse
         with \
-                patch('zerver.lib.actions.request_event_queue', return_value=42), \
-                patch('zerver.lib.actions.get_user_events', return_value=[]):
+                patch('zerver.lib.events.request_event_queue', return_value=42), \
+                patch('zerver.lib.events.get_user_events', return_value=[]):
             result = self.client_get('/', dict(**kwargs))
         return result
 

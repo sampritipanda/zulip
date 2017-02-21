@@ -73,9 +73,11 @@ class TemplateTestCase(ZulipTestCase):
             'zerver/navbar.html',
             'zerver/right-sidebar.html',
             'zerver/search_operators.html',
+            'zerver/settings_overlay.html',
             'zerver/stream_creation_prompt.html',
             'zerver/subscriptions.html',
             'zerver/tutorial_finale.html',
+            'zerver/message_history.html',
         ]
         unusual = [
             'confirmation/mituser_confirmation_email_body.txt',

@@ -6,7 +6,7 @@ from os.path import expanduser
 from six.moves import configparser as cp
 
 home = expanduser('~')
-CONFIG_PATH = home + '/google-commute.ini'
+CONFIG_PATH = home + '/commute_bot.config'
 
 class CommuteHandler(object):
     '''
@@ -77,22 +77,12 @@ class CommuteHandler(object):
         you can use the timezone bot.
                 '''
 
-    def triage_message(self, message, client):
-        original_content = message['content']
-        # This next line of code is defensive, as we
-        # never want to get into an infinite loop of posting follow
-        # ups for own follow ups!
-        if message['display_recipient'] == 'commute':
-            return False
-        is_commute = original_content.startswith('@commute')
-        return is_commute
-
     # adds API Authentication Key to url request
     def get_api_key(self):
-        # google-commute.ini must have been moved from
-        # ~/zulip/contrib_bots/bots/commute_bot/CommuteBot/google-commute.ini into
-        # /google-commute.ini for program to work
-        # see doc.md for more information
+        # commute_bot.config must have been moved from
+        # ~/zulip/contrib_bots/bots/commute_bot/commute_bot.config into
+        # /commute_bot.config for program to work
+        # see readme.md for more information
         with open(CONFIG_PATH) as settings:
             config = cp.ConfigParser()
             config.readfp(settings)

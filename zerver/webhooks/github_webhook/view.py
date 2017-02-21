@@ -20,7 +20,7 @@ def get_opened_or_update_pull_request_body(payload):
     # type: (Dict[str, Any]) -> Text
     pull_request = payload['pull_request']
     action = payload['action']
-    if action == 'synchronized':
+    if action == 'synchronize':
         action = 'updated'
     assignee = None
     if pull_request.get('assignee'):
@@ -362,7 +362,7 @@ EVENT_FUNCTION_MAPPER = {
     'watch': get_watch_body,
 }
 
-@api_key_only_webhook_view('Github')
+@api_key_only_webhook_view('GitHub')
 @has_request_variables
 def api_github_webhook(
         request, user_profile, client,
@@ -380,7 +380,7 @@ def get_event(request, payload):
     event = request.META['HTTP_X_GITHUB_EVENT']
     if event == 'pull_request':
         action = payload['action']
-        if action == 'opened' or action == 'synchronized':
+        if action == 'opened' or action == 'synchronize' or action == 'reopened':
             return 'opened_or_update_pull_request'
         if action == 'closed':
             return 'closed_pull_request'

@@ -133,9 +133,11 @@ WEBHOOK_INTEGRATIONS = [
     ),
     WebhookIntegration('gitlab', display_name='GitLab'),
     WebhookIntegration('gosquared', display_name='GoSquared'),
+    WebhookIntegration('greenhouse', display_name='Greenhouse'),
     WebhookIntegration('hellosign', display_name='HelloSign'),
     WebhookIntegration('helloworld', display_name='Hello World'),
     WebhookIntegration('heroku', display_name='Heroku'),
+    WebhookIntegration('homeassistant', display_name='Home Assistant'),
     WebhookIntegration('ifttt', function='zerver.webhooks.ifttt.view.api_iftt_app_webhook', display_name='IFTTT'),
     WebhookIntegration('jira', secondary_line_text='(hosted or v5.2+)', display_name='JIRA'),
     WebhookIntegration('librato'),
@@ -162,6 +164,7 @@ WEBHOOK_INTEGRATIONS = [
         logo='static/images/integrations/logos/yo-app.png',
         display_name='Yo App'
     ),
+    WebhookIntegration('wordpress', display_name='WordPress'),
     WebhookIntegration('zapier'),
     WebhookIntegration('zendesk')
 ]  # type: List[WebhookIntegration]

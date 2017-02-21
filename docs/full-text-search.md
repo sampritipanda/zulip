@@ -7,7 +7,7 @@ supports English text, but there is an experimental
 full-text search for all languages.
 
 The user interface and feature set for Zulip's full-text search is
-documented in the "Search help" documentation section in the Zulip
+documented in the "Search operators" documentation section in the Zulip
 app's gear menu.
 
 ## The default full-text search implementation
@@ -52,7 +52,7 @@ The following processes should be executed as the root user. Run:
 This section describes how to enable using PGroonga to back the
 full-text search feature.
 
-* To install PGroonga, add `pgroonga = enabled` in the `[machine]`
+To install PGroonga, add `pgroonga = enabled` in the `[machine]`
 section in `/etc/zulip/zulip.conf`:
 
     [machine]

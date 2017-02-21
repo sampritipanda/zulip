@@ -18,6 +18,7 @@ from django.contrib.auth.views import (login, password_reset,
 import zerver.tornado.views
 import zerver.views
 import zerver.views.auth
+import zerver.views.compatibility
 import zerver.views.home
 import zerver.views.registration
 import zerver.views.zephyr
@@ -164,12 +165,13 @@ v1_api_and_json_patterns = [
     # Returns a 204, used by desktop app to verify connectivity status
     url(r'generate_204$', zerver.views.registration.generate_204, name='zerver.views.registration.generate_204'),
 
-    # realm/aliases -> zerver.views.realm_aliases
+    # realm/domains -> zerver.views.realm_aliases
     url(r'^realm/domains$', rest_dispatch,
         {'GET': 'zerver.views.realm_aliases.list_aliases',
          'POST': 'zerver.views.realm_aliases.create_alias'}),
     url(r'^realm/domains/(?P<domain>\S+)$', rest_dispatch,
-        {'DELETE': 'zerver.views.realm_aliases.delete_alias'}),
+        {'PATCH': 'zerver.views.realm_aliases.patch_alias',
+         'DELETE': 'zerver.views.realm_aliases.delete_alias'}),
 
     # realm/emoji -> zerver.views.realm_emoji
     url(r'^realm/emoji$', rest_dispatch,
@@ -186,20 +188,28 @@ v1_api_and_json_patterns = [
         {'DELETE': 'zerver.views.realm_filters.delete_filter'}),
 
     # users -> zerver.views.users
+    #
+    # Since some of these endpoints do something different if used on
+    # yourself with `/me` as the email, we need to make sure that we
+    # don't accidentally trigger these.  The cleanest way to do that
+    # is to add a regular expression assertion that it isn't `/me/`
+    # (or ends with `/me`, in the case of hitting the root URL).
     url(r'^users$', rest_dispatch,
         {'GET': 'zerver.views.users.get_members_backend',
          'POST': 'zerver.views.users.create_user_backend'}),
-    url(r'^users/(?P<email>(?!me)[^/]*)/reactivate$', rest_dispatch,
+    url(r'^users/(?!me/)(?P<email>[^/]*)/reactivate$', rest_dispatch,
         {'POST': 'zerver.views.users.reactivate_user_backend'}),
-    url(r'^users/(?P<email>(?!me)[^/]*)$', rest_dispatch,
+    url(r'^users/(?!me/)(?P<email>[^/]*)/presence$', rest_dispatch,
+        {'GET': 'zerver.views.presence.get_presence_backend'}),
+    url(r'^users/(?!me$)(?P<email>[^/]*)$', rest_dispatch,
         {'PATCH': 'zerver.views.users.update_user_backend',
          'DELETE': 'zerver.views.users.deactivate_user_backend'}),
     url(r'^bots$', rest_dispatch,
         {'GET': 'zerver.views.users.get_bots_backend',
          'POST': 'zerver.views.users.add_bot_backend'}),
-    url(r'^bots/(?P<email>(?!me)[^/]*)/api_key/regenerate$', rest_dispatch,
+    url(r'^bots/(?!me/)(?P<email>[^/]*)/api_key/regenerate$', rest_dispatch,
         {'POST': 'zerver.views.users.regenerate_bot_api_key'}),
-    url(r'^bots/(?P<email>(?!me)[^/]*)$', rest_dispatch,
+    url(r'^bots/(?!me/)(?P<email>[^/]*)$', rest_dispatch,
         {'PATCH': 'zerver.views.users.patch_bot_backend',
          'DELETE': 'zerver.views.users.deactivate_bot_backend'}),
 
@@ -215,6 +225,8 @@ v1_api_and_json_patterns = [
         {'POST': 'zerver.views.messages.render_message_backend'}),
     url(r'^messages/flags$', rest_dispatch,
         {'POST': 'zerver.views.messages.update_message_flags'}),
+    url(r'^messages/(?P<message_id>\d+)/history$', rest_dispatch,
+        {'GET': 'zerver.views.messages.get_message_edit_history'}),
 
     # reactions -> zerver.view.reactions
     # PUT adds a reaction to a message
@@ -223,6 +235,12 @@ v1_api_and_json_patterns = [
         rest_dispatch,
         {'PUT': 'zerver.views.reactions.add_reaction_backend',
          'DELETE': 'zerver.views.reactions.remove_reaction_backend'}),
+
+    # attachments -> zerver.views.attachments
+    url(r'^attachments$', rest_dispatch,
+        {'GET': 'zerver.views.attachments.list_by_user'}),
+    url(r'^attachments/(?P<attachment_id>[0-9]+)$', rest_dispatch,
+        {'DELETE': 'zerver.views.attachments.remove'}),
 
     # typing -> zerver.views.typing
     # POST sends a typing notification event to recipients
@@ -309,7 +327,7 @@ v1_api_and_json_patterns = [
 
     # used to register for an event queue in tornado
     url(r'^register$', rest_dispatch,
-        {'POST': 'zerver.views.events_register.api_events_register'}),
+        {'POST': 'zerver.views.events_register.events_register_backend'}),
 
     # events -> zerver.tornado.views
     url(r'^events$', rest_dispatch,
@@ -350,6 +368,9 @@ urls += [
     # This json format view used by the mobile apps lists which authentication
     # backends the server allows, to display the proper UI and check for server existence
     url(r'^api/v1/get_auth_backends', zerver.views.auth.api_get_auth_backends, name='zerver.views.auth.api_get_auth_backends'),
+
+    # used by mobile apps to check if they are compatible with the server
+    url(r'^compatibility$', zerver.views.compatibility.check_compatibility),
 
     # This json format view used by the mobile apps accepts a username
     # password/pair and returns an API key.

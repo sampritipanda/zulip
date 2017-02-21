@@ -19,6 +19,7 @@ from zerver.lib.timestamp import datetime_to_timestamp
 
 from zerver.models import (
     get_display_recipient_by_id,
+    get_user_profile_by_id,
     Message,
     Realm,
     Recipient,
@@ -78,6 +79,7 @@ class MessageDict(object):
             sender_full_name = message.sender.full_name,
             sender_short_name = message.sender.short_name,
             sender_avatar_source = message.sender.avatar_source,
+            sender_avatar_version = message.sender.avatar_version,
             sender_is_mirror_dummy = message.sender.is_mirror_dummy,
             sending_client_name = message.sending_client.name,
             recipient_id = message.recipient.id,
@@ -111,6 +113,7 @@ class MessageDict(object):
             sender_full_name = row['sender__full_name'],
             sender_short_name = row['sender__short_name'],
             sender_avatar_source = row['sender__avatar_source'],
+            sender_avatar_version = row['sender__avatar_version'],
             sender_is_mirror_dummy = row['sender__is_mirror_dummy'],
             sending_client_name = row['sending_client__name'],
             recipient_id = row['recipient_id'],
@@ -138,6 +141,7 @@ class MessageDict(object):
             sender_full_name,
             sender_short_name,
             sender_avatar_source,
+            sender_avatar_version,
             sender_is_mirror_dummy,
             sending_client_name,
             recipient_id,
@@ -145,9 +149,13 @@ class MessageDict(object):
             recipient_type_id,
             reactions
     ):
-        # type: (bool, Message, int, datetime.datetime, Text, Text, Text, datetime.datetime, Text, Optional[int], int, Text, int, Text, Text, Text, Text, bool, Text, int, int, int, List[Dict[str, Any]]) -> Dict[str, Any]
+        # type: (bool, Optional[Message], int, Optional[datetime.datetime], Optional[Text], Text, Text, datetime.datetime, Optional[Text], Optional[int], int, Text, int, Text, Text, Text, Text, int, bool, Text, int, int, int, List[Dict[str, Any]]) -> Dict[str, Any]
 
-        avatar_url = get_avatar_url(sender_avatar_source, sender_email)
+        avatar_url = get_avatar_url(
+            sender_avatar_source,
+            sender_email,
+            sender_avatar_version
+        )
 
         display_recipient = get_display_recipient_by_id(
             recipient_id,
@@ -329,9 +337,17 @@ def render_markdown(message, content, realm=None, realm_alert_words=None, messag
             if user_id in message_user_ids:
                 possible_words.update(set(words))
 
+    if message is None:
+        # If we don't have a message, then we are in the compose preview
+        # codepath, so we know we are dealing with a human.
+        sent_by_bot = False
+    else:
+        sent_by_bot = get_user_profile_by_id(message.sender_id).is_bot
+
     # DO MAIN WORK HERE -- call bugdown to convert
     rendered_content = bugdown.convert(content, message=message, message_realm=realm,
-                                       possible_words=possible_words)
+                                       possible_words=possible_words,
+                                       sent_by_bot=sent_by_bot)
 
     if message is not None:
         message.user_ids_with_alert_words = set()

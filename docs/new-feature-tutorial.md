@@ -6,6 +6,11 @@ as an example of the specific steps needed to add a new feature: adding
 a new option to the application that is dynamically synced through the
 data system in real-time to all browsers the user may have open.
 
+As you read this, you may find you need to learn about Zulip's
+real-time push system; the
+[real-time push and events](events-system.html) documentation has a
+detailed explanation of how everything works.
+
 ## General Process in brief
 
 ### Adding a field to the database
@@ -31,7 +36,7 @@ interacting with the database in `zerver/lib/actions.py`. It should
 update the database and send an event announcing the change.
 
 **Application state:** Modify the `fetch_initial_state_data` and
-`apply_events` functions in `zerver/lib/actions.py` to update the state
+`apply_event` functions in `zerver/lib/actions.py` to update the state
 based on the event you just created.
 
 **Backend implementation:** Make any other modifications to the backend
@@ -176,17 +181,17 @@ realm. :
 ### Update application state
 
 You then need to add code that will handle the event and update the
-application state. In `zerver/lib/actions.py` update the
-`fetch_initial_state` and `apply_events` functions. :
+application state. In `zerver/lib/events.py` update the
+`fetch_initial_state` and `apply_event` functions. :
 
-    def fetch_initial_state_data(user_profile, event_types, queue_id):
+    def fetch_initial_state_data(user_profile, event_types, queue_id, include_subscribers=True):
       # ...
       state['realm_invite_by_admins_only'] = user_profile.realm.invite_by_admins_only`
 
-In this case you don't need to change `apply_events` because there is
+In this case you don't need to change `apply_event` because there is
 already code that will correctly handle the realm update event type: :
 
-    def apply_events(state, events, user_profile):
+    def apply_event(state, events, user_profile, include_subscribers):
       for event in events:
         # ...
         elif event['type'] == 'realm':

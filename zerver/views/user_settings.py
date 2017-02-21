@@ -9,13 +9,13 @@ from django.http import HttpRequest, HttpResponse
 
 from zerver.decorator import authenticated_json_post_view, has_request_variables, REQ
 from zerver.lib.actions import do_change_password, \
-    do_change_full_name, do_change_enable_desktop_notifications, \
+    do_change_enable_desktop_notifications, \
     do_change_enter_sends, do_change_enable_sounds, \
     do_change_enable_offline_email_notifications, do_change_enable_digest_emails, \
     do_change_enable_offline_push_notifications, do_change_enable_online_push_notifications, \
     do_change_default_desktop_notifications, do_change_autoscroll_forever, \
     do_change_enable_stream_desktop_notifications, do_change_enable_stream_sounds, \
-    do_regenerate_api_key, do_change_avatar_source, do_change_twenty_four_hour_time, \
+    do_regenerate_api_key, do_change_avatar_fields, do_change_twenty_four_hour_time, \
     do_change_left_side_userlist, do_change_default_language, \
     do_change_pm_content_in_desktop_notifications
 from zerver.lib.avatar import avatar_url
@@ -24,6 +24,7 @@ from zerver.lib.response import json_success, json_error
 from zerver.lib.upload import upload_avatar_image
 from zerver.lib.validator import check_bool, check_string
 from zerver.lib.request import JsonableError
+from zerver.lib.users import check_change_full_name
 from zerver.models import UserProfile, Realm, name_changes_disabled
 
 @has_request_variables
@@ -87,11 +88,8 @@ def json_change_settings(request, user_profile,
             # they'd have to be trying to break the rules.
             pass
         else:
-            new_full_name = full_name.strip()
-            if len(new_full_name) > UserProfile.MAX_NAME_LENGTH:
-                return json_error(_("Name too long!"))
-            do_change_full_name(user_profile, new_full_name)
-            result['full_name'] = new_full_name
+            # Note that check_change_full_name strips the passed name automatically
+            result['full_name'] = check_change_full_name(user_profile, full_name)
 
     return json_success(result)
 
@@ -205,7 +203,7 @@ def set_avatar_backend(request, user_profile):
 
     user_file = list(request.FILES.values())[0]
     upload_avatar_image(user_file, user_profile, user_profile.email)
-    do_change_avatar_source(user_profile, UserProfile.AVATAR_FROM_USER)
+    do_change_avatar_fields(user_profile, UserProfile.AVATAR_FROM_USER)
     user_avatar_url = avatar_url(user_profile)
 
     json_result = dict(
@@ -215,7 +213,7 @@ def set_avatar_backend(request, user_profile):
 
 def delete_avatar_backend(request, user_profile):
     # type: (HttpRequest, UserProfile) -> HttpResponse
-    do_change_avatar_source(user_profile, UserProfile.AVATAR_FROM_GRAVATAR)
+    do_change_avatar_fields(user_profile, UserProfile.AVATAR_FROM_GRAVATAR)
     gravatar_url = avatar_url(user_profile)
 
     json_result = dict(

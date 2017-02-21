@@ -17,6 +17,10 @@ function button_for_sub(sub) {
     return $(".stream-row[data-stream-id='" + id + "'] .check");
 }
 
+function row_for_stream_id(stream_id) {
+    return $(".stream-row[data-stream-id='" + stream_id + "']");
+}
+
 function settings_button_for_sub(sub) {
     var id = parseInt(sub.stream_id, 10);
     return $(".subscription_settings[data-stream-id='" + id + "'] .subscribe-button");
@@ -307,6 +311,13 @@ function prepend_subscriber(sub_row, email) {
     list.prepend(format_member_list_elem(email));
 }
 
+exports.remove_stream = function (stream_id) {
+    // It is possible that row is empty when we deactivate a
+    // stream, but we let jQuery silently handle that.
+    var row = row_for_stream_id(stream_id);
+    row.remove();
+};
+
 function show_subscription_settings(sub_row) {
     var stream_id = sub_row.data("stream-id");
     var sub = stream_data.get_sub_by_id(stream_id);
@@ -500,37 +511,78 @@ function remove_temporarily_miscategorized_streams() {
 
 exports.remove_miscategorized_streams = remove_temporarily_miscategorized_streams;
 
-function stream_matches_query(query, sub) {
+function stream_matches_query(query, sub, attr) {
     var search_terms = query.input.toLowerCase().split(",").map(function (s) {
         return s.trim();
     });
 
     var flag = true;
     flag = flag && (function () {
-        var sub_name = sub.name.toLowerCase();
-
+        var sub_attr = sub[attr].toLowerCase();
         return _.any(search_terms, function (o) {
-            return new RegExp(o).test(sub_name);
+            if (sub_attr.indexOf(o) !== -1) {
+                return true;
+            }
         });
     }());
     flag = flag && ((sub.subscribed || !query.subscribed_only) ||
                     sub.data_temp_view === "true");
     return flag;
 }
+exports.stream_name_match_stream_ids = [];
+exports.stream_description_match_stream_ids = [];
 
 // query is now an object rather than a string.
 // Query { input: String, subscribed_only: Boolean }
 exports.filter_table = function (query) {
+    exports.stream_name_match_stream_ids = [];
+    exports.stream_description_match_stream_ids = [];
+    var others = [];
+    var stream_id_to_stream_name = {};
+    var widgets = {};
+
+    function sort_by_stream_name(a, b) {
+        var stream_a_name = stream_id_to_stream_name[a].toLocaleLowerCase();
+        var stream_b_name = stream_id_to_stream_name[b].toLocaleLowerCase();
+        return String.prototype.localeCompare.call(stream_a_name, stream_b_name);
+    }
+
     _.each($("#subscriptions_table .stream-row"), function (row) {
         var sub = stream_data.get_sub_by_id($(row).attr("data-stream-id"));
         sub.data_temp_view = $(row).attr("data-temp-view");
 
-        if (stream_matches_query(query, sub)) {
+        if (stream_matches_query(query, sub, 'name')) {
             $(row).removeClass("notdisplayed");
-        } else {
+
+            stream_id_to_stream_name[sub.stream_id] = sub.name;
+            exports.stream_name_match_stream_ids.push(sub.stream_id);
+
+            widgets[sub.stream_id] = $(row).detach();
+        } else if (stream_matches_query(query, sub, 'description')) {
+            $(row).removeClass("notdisplayed");
+
+            stream_id_to_stream_name[sub.stream_id] = sub.name;
+            exports.stream_description_match_stream_ids.push(sub.stream_id);
+
+            widgets[sub.stream_id] = $(row).detach();
+       } else {
             $(row).addClass("notdisplayed");
+            others.push($(row).detach());
         }
     });
+
+    exports.stream_name_match_stream_ids.sort(sort_by_stream_name);
+    exports.stream_description_match_stream_ids.sort(sort_by_stream_name);
+
+    _.each(exports.stream_name_match_stream_ids, function (stream_id) {
+        $('#subscriptions_table .streams-list').append(widgets[stream_id]);
+    });
+
+    _.each(exports.stream_description_match_stream_ids, function (stream_id) {
+        $('#subscriptions_table .streams-list').append(widgets[stream_id]);
+    });
+
+    $('#subscriptions_table .streams-list').append(others);
 
     if ($(".stream-row.active").hasClass("notdisplayed")) {
         $(".right .settings").hide();
@@ -549,6 +601,34 @@ function actually_filter_streams() {
         subscribed_only = false;
     }
     exports.filter_table({ input: query, subscribed_only: subscribed_only });
+}
+
+function redraw_privacy_related_stuff(sub_row, sub) {
+    var stream_settings = settings_for_sub(sub);
+    var html;
+
+    sub = stream_data.add_admin_options(sub);
+
+    html = templates.render('subscription_setting_icon', sub);
+    sub_row.find('.icon').expectOne().replaceWith($(html));
+
+    html = templates.render('subscription_type', sub);
+    stream_settings.find('.subscription-type').expectOne().html(html);
+
+    if (sub.invite_only) {
+        stream_settings.find(".large-icon")
+            .removeClass("hash").addClass("lock")
+            .html("<i class='icon-vector-lock'></i>");
+    } else {
+        stream_settings.find(".large-icon")
+            .addClass("hash").removeClass("lock")
+            .html("");
+    }
+
+    html = templates.render('change_stream_privacy', sub);
+    stream_settings.find('.change-stream-privacy').expectOne().html(html);
+
+    stream_list.redraw_stream_privacy(sub.name);
 }
 
 var filter_streams = _.throttle(actually_filter_streams, 50);
@@ -647,7 +727,7 @@ exports.onlaunchtrigger = function () {
 exports.launch = function () {
     meta.is_open = true;
     exports.setup_page(function () {
-        $("#subscription_overlay").fadeIn(300);
+        $("#subscription_overlay").addClass("show");
     });
 };
 
@@ -659,8 +739,9 @@ Object.defineProperty(exports, "is_open", {
 });
 
 exports.close = function () {
+    hashchange.exit_settings();
     meta.is_open = false;
-    $("#subscription_overlay").fadeOut(500);
+    $("#subscription_overlay").removeClass("show");
     subs.remove_miscategorized_streams();
 };
 
@@ -915,8 +996,8 @@ $(function () {
             $("#add_new_stream_title, .settings, #stream-creation").hide();
         },
         stream_creation: function () {
+            $("#stream_settings_title, .subscriptions-container .settings, .nothing-selected").hide();
             $("#stream-creation, #add_new_stream_title").show();
-            $("#stream_settings_title, .settings, .nothing-selected").hide();
         },
         settings: function () {
             $(".settings, #stream_settings_title").show();
@@ -943,7 +1024,17 @@ $(function () {
         var stream = $.trim($("#search_stream_name").val());
         $('#create_stream_name').val(stream);
         show_new_stream_modal();
-        $('#create_stream_name').focus();
+
+        // at less than 700px we have a @media query that when you tap the
+        // #create_stream_button, the stream prompt slides in. However, when you
+        // focus  the button on that page, the entire app view jumps over to
+        // the other tab, and the animation breaks.
+        // it is unclear whether this is a browser bug or "feature", however what
+        // is clear is that this shoudn't be touched unless you're also changing
+        // the mobile @media query at 700px.
+        if (window.innerWidth > 700) {
+            $('#create_stream_name').focus();
+        }
     });
 
     $('body').on('change', '#user-checkboxes input, #make-invite-only input', update_announce_stream_state);
@@ -1160,6 +1251,16 @@ $(function () {
         $('#empty_narrow_message').show();
     });
 
+    $("#subscriptions_table").on("click", ".stream-row, #create_stream_button", function () {
+        $(".right").addClass("show");
+        $(".subscriptions-header").addClass("slide-left");
+    });
+
+    $("#subscriptions_table").on("click", ".icon-vector-chevron-left", function () {
+        $(".right").removeClass("show");
+        $(".subscriptions-header").removeClass("slide-left");
+    });
+
     $("#subscriptions_table").on("click", ".sub_setting_checkbox", function (e) {
         var control = $(e.target).closest('.sub_setting_checkbox').find('.sub_setting_control');
         // A hack.  Don't change the state of the checkbox if we
@@ -1277,34 +1378,6 @@ $(function () {
         exports.remove_user_from_stream(principal, stream_name, removal_success,
                                         removal_failure);
     });
-
-    function redraw_privacy_related_stuff(sub_row, sub) {
-        var stream_settings = settings_for_sub(sub);
-        var html;
-
-        sub = stream_data.add_admin_options(sub);
-
-        html = templates.render('subscription_setting_icon', sub);
-        sub_row.find('.icon').expectOne().replaceWith($(html));
-
-        html = templates.render('subscription_type', sub);
-        stream_settings.find('.subscription-type').expectOne().html(html);
-
-        if (sub.invite_only) {
-            stream_settings.find(".large-icon")
-                .removeClass("hash").addClass("lock")
-                .html("<i class='icon-vector-lock'></i>");
-        } else {
-            stream_settings.find(".large-icon")
-                .addClass("hash").removeClass("lock")
-                .html("");
-        }
-
-        html = templates.render('change_stream_privacy', sub);
-        stream_settings.find('.change-stream-privacy').expectOne().html(html);
-
-        stream_list.redraw_stream_privacy(sub.name);
-    }
 
     function change_stream_privacy(e, is_private, success_message, error_message, invite_only) {
         e.preventDefault();

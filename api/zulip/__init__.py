@@ -186,8 +186,25 @@ class Client(object):
         if client is None:
             client = _default_client()
 
+        # Fill values from Environment Variables if not available in Constructor
+        if config_file is None:
+            config_file = os.environ.get("ZULIP_CONFIG")
+        if api_key is None:
+            api_key = os.environ.get("ZULIP_API_KEY")
+        if email is None:
+            email = os.environ.get("ZULIP_EMAIL")
+        if site is None:
+            site = os.environ.get("ZULIP_SITE")
+        if client_cert is None:
+            client_cert = os.environ.get("ZULIP_CERT")
+        if client_cert_key is None:
+            client_cert_key = os.environ.get("ZULIP_CERT_KEY")
+        if cert_bundle is None:
+            cert_bundle = os.environ.get("ZULIP_CERT_BUNDLE")
+
         if config_file is None:
             config_file = get_default_config_filename()
+
         if os.path.exists(config_file):
             config = SafeConfigParser()
             with open(config_file, 'r') as f:
@@ -428,9 +445,9 @@ class Client(object):
             # type: () -> Tuple[str, int]
             while True:
                 if event_types is None:
-                    res = self.register() # type: ignore
+                    res = self.register()
                 else:
-                    res = self.register(event_types=event_types, narrow=narrow) # type: ignore
+                    res = self.register(event_types=event_types, narrow=narrow)
 
                 if 'error' in res.get('result'):
                     if self.verbose:
@@ -444,7 +461,7 @@ class Client(object):
             if queue_id is None:
                 (queue_id, last_event_id) = do_register()
 
-            res = self.get_events(queue_id=queue_id, last_event_id=last_event_id) # type: ignore
+            res = self.get_events(queue_id=queue_id, last_event_id=last_event_id)
             if 'error' in res.get('result'):
                 if res["result"] == "http-error":
                     if self.verbose:
@@ -582,6 +599,19 @@ class Client(object):
             request=request,
         )
 
+    def get_presence(self, email):
+        # type: (Dict[str, Any]) -> Dict[str, Any]
+        '''
+            Example usage:
+
+            >>> client.get_presence()
+            {'presence': {'website': {'timestamp': 1486799122, 'status': 'active'}}, 'result': 'success', 'msg': ''}
+        '''
+        return self.call_endpoint(
+            url='users/%s/presence' % (email,),
+            method='GET',
+        )
+
     def get_streams(self, **request):
         # type: (**Any) -> Dict[str, Any]
         '''
@@ -715,7 +745,7 @@ class ZulipStream(object):
                    "to": self.to,
                    "subject": self.subject,
                    "content": content}
-        self.client.send_message(message) # type: ignore
+        self.client.send_message(message)
 
     def flush(self):
         # type: () -> None

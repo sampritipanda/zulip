@@ -24,27 +24,38 @@ i18n.init({
     lng: 'en',
 });
 
+subs.stream_name_match_stream_ids = [];
+subs.stream_description_match_stream_ids = [];
 
 (function test_filter_table() {
     var denmark = {
         subscribed: false,
         name: 'Denmark',
         stream_id: 1,
+        description: 'Copenhagen',
     };
     var poland = {
         subscribed: true,
         name: 'Poland',
         stream_id: 2,
+        description: 'monday',
     };
     var pomona = {
         subscribed: true,
         name: 'Pomona',
         stream_id: 3,
+        description: 'college',
+    };
+    var cpp = {
+        subscribed: true,
+        name: 'C++',
+        stream_id: 4,
     };
 
     var elem_1 = $(global.render_template("subscription", denmark));
     var elem_2 = $(global.render_template("subscription", poland));
     var elem_3 = $(global.render_template("subscription", pomona));
+    var elem_4 = $(global.render_template("subscription", cpp));
 
     $("body").empty();
     $("body").append('<div id="subscriptions_table"></div>');
@@ -54,6 +65,7 @@ i18n.init({
     stream_data.add_sub("Denmark", denmark);
     stream_data.add_sub("Poland", poland);
     stream_data.add_sub("Pomona", pomona);
+    stream_data.add_sub("C++", cpp);
 
     streams_list.append(elem_1);
     streams_list.append(elem_2);
@@ -81,6 +93,13 @@ i18n.init({
     assert(elem_1.hasClass("notdisplayed"));
     assert(!elem_2.hasClass("notdisplayed"));
     assert(!elem_3.hasClass("notdisplayed"));
+
+    // Search handles unusual characters like C++
+    subs.filter_table({input: "c++", subscribed_only: false});
+    assert(elem_1.hasClass("notdisplayed"));
+    assert(elem_2.hasClass("notdisplayed"));
+    assert(elem_3.hasClass("notdisplayed"));
+    assert(!elem_4.hasClass("notdisplayed"));
 
     // Search subscribed streams only
     subs.filter_table({input: "d", subscribed_only: true});
@@ -115,5 +134,29 @@ i18n.init({
     assert(!elem_1.hasClass("active"));
     assert.equal($(".right .settings").css("display"), "none");
     assert.notEqual($(".right .nothing-selected").css("display"), "none");
+
+    // Search terms match stream description
+    subs.filter_table({input: "Co", subscribed_only: false});
+    assert(!elem_1.hasClass("notdisplayed"));
+    assert(elem_2.hasClass("notdisplayed"));
+    assert(!elem_3.hasClass("notdisplayed"));
+
+    subs.filter_table({input: "Mon", subscribed_only: false});
+    assert(elem_1.hasClass("notdisplayed"));
+    assert(!elem_2.hasClass("notdisplayed"));
+    assert(!elem_3.hasClass("notdisplayed"));
+
+    subs.filter_table({input: "p", subscribed_only: false});
+    assert.equal(subs.stream_name_match_stream_ids.length, 2);
+    assert.equal(subs.stream_description_match_stream_ids, 1);
+    assert.equal(subs.stream_name_match_stream_ids[0], 2);
+    assert.equal(subs.stream_name_match_stream_ids[1], 3);
+    assert.equal(subs.stream_description_match_stream_ids[0], 1);
+
+    subs.filter_table({input: "d", subscribed_only: false});
+    assert.equal(subs.stream_name_match_stream_ids.length, 2);
+    assert.equal(subs.stream_description_match_stream_ids, 0);
+    assert.equal(subs.stream_name_match_stream_ids[0], 1);
+    assert.equal(subs.stream_name_match_stream_ids[1], 2);
 }());
 

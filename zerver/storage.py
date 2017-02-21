@@ -5,8 +5,10 @@ import shutil
 from typing import List, Any, Tuple
 
 from django.conf import settings
-from django.contrib.staticfiles.storage import CachedFilesMixin, StaticFilesStorage
+from django.contrib.staticfiles.storage import ManifestStaticFilesStorage
 from pipeline.storage import PipelineMixin
+
+from zerver.lib.str_utils import force_str
 
 class AddHeaderMixin(object):
     def post_process(self, paths, dry_run=False, **kwargs):
@@ -36,7 +38,7 @@ class AddHeaderMixin(object):
             storage.delete(path)
 
             with storage.open(path, 'w') as new_file:
-                new_file.write(header + orig_contents)
+                new_file.write(force_str(header + orig_contents, encoding=settings.FILE_CHARSET))
 
             ret_dict[path] = (path, path, True)
 
@@ -76,8 +78,24 @@ class RemoveUnminifiedFilesMixin(object):
 
         return []
 
+if settings.PRODUCTION:
+    # This is a hack to use staticfiles.json from within the
+    # deployment, rather than a directory under STATIC_ROOT.  By doing
+    # so, we can use a different copy of staticfiles.json for each
+    # deployment, which ensures that we always use the correct static
+    # assets for each deployment.
+    ManifestStaticFilesStorage.manifest_name = os.path.join(settings.DEPLOY_ROOT,
+                                                            "staticfiles.json")
+    orig_path = ManifestStaticFilesStorage.path
+
+    def path(self, name):
+        # type: (Any, str) -> str
+        if name == ManifestStaticFilesStorage.manifest_name:
+            return name
+        return orig_path(self, name)
+    ManifestStaticFilesStorage.path = path
 
 class ZulipStorage(PipelineMixin,
                    AddHeaderMixin, RemoveUnminifiedFilesMixin,
-                   CachedFilesMixin, StaticFilesStorage):
+                   ManifestStaticFilesStorage):
     pass

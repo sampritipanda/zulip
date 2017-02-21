@@ -83,6 +83,13 @@ exports.stream_sidebar = (function () {
     return self;
 }());
 
+exports.remove_sidebar_row = function (stream_id) {
+    exports.stream_sidebar.remove_row(stream_id);
+    // We need to make sure we resort if the removed sub gets added again
+    previous_sort_order = undefined;
+    previous_unpinned_order = undefined;
+};
+
 exports.create_initial_sidebar_rows = function () {
     // This code is slightly opaque, but it ends up building
     // up list items and attaching them to the "sub" data
@@ -129,6 +136,8 @@ exports.build_stream_list = function () {
             unpinned_streams.push(stream);
         }
     });
+
+    pinned_streams.sort(util.strcmp);
 
     unpinned_streams.sort(function (a, b) {
         if (sort_recent) {
@@ -391,6 +400,10 @@ exports.refresh_pinned_or_unpinned_stream = function (sub) {
     exports.update_streams_sidebar();
 };
 
+function deselect_top_left_corner_items() {
+    $("ul.filters li").removeClass('active-filter active-sub-filter');
+}
+
 $(function () {
     // TODO, Eventually topic_list won't be a big singleton,
     // and we can create more component-based click handlers for
@@ -403,6 +416,7 @@ $(function () {
     pm_list.set_click_handlers();
 
     $(document).on('narrow_activated.zulip', function (event) {
+        deselect_top_left_corner_items();
         reset_to_unnarrowed(narrow.stream() === zoomed_stream);
 
         // TODO: handle confused filters like "in:all stream:foo"
@@ -434,11 +448,12 @@ $(function () {
                 stream_li.addClass('active-filter');
             }
             rebuild_recent_topics(op_stream[0]);
-            unread.process_visible();
+            unread_ui.process_visible();
         }
     });
 
     $(document).on('narrow_deactivated.zulip', function () {
+        deselect_top_left_corner_items();
         reset_to_unnarrowed();
         pm_list.close();
         $("#global_filters li[data-name='home']").addClass('active-filter');
@@ -450,11 +465,9 @@ $(function () {
     });
 
     $(document).on('subscription_remove_done.zulip', function (event) {
-        exports.stream_sidebar.remove_row(event.sub.stream_id);
-        // We need to make sure we resort if the removed sub gets added again
-        previous_sort_order = undefined;
-        previous_unpinned_order = undefined;
+        exports.remove_sidebar_row(event.sub.stream_id);
     });
+
 
     $('#stream_filters').on('click', 'li .subscription_block', function (e) {
         if (e.metaKey || e.ctrlKey) {

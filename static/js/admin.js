@@ -12,13 +12,15 @@ exports.show_or_hide_menu_item = function () {
         item.show();
     } else {
         item.hide();
+        $(".ind-tab[data-name='admin']").addClass("disabled");
+        $(".settings-list li.admin").hide();
     }
 };
 
-function get_user_info(email) {
+function get_user_info(user_id) {
     var self = {};
-    self.user_row = $("tr[id='user_" + email + "']");
-    self.form_row = $("tr[id='user_form_" + email + "']");
+    self.user_row = $("tr.user_row[data-user-id='" + user_id + "']");
+    self.form_row = $("tr.user-name-form[data-user-id='" + user_id + "']");
 
     return self;
 }
@@ -28,12 +30,12 @@ function get_email_for_user_row(row) {
     return email;
 }
 
-exports.update_user_full_name = function (email, new_full_name) {
+exports.update_user_full_name = function (user_id, new_full_name) {
     if (!meta.loaded) {
         return;
     }
 
-    var user_info = get_user_info(email);
+    var user_info = get_user_info(user_id);
 
     var user_row = user_info.user_row;
     var form_row = user_info.form_row;
@@ -111,13 +113,62 @@ function populate_streams(streams_data) {
     loading.destroy_indicator($('#admin_page_streams_loading_indicator'));
 }
 
-function populate_default_streams(streams_data) {
-    var default_streams_table = $("#admin_default_streams_table").expectOne();
-    _.each(streams_data, function (stream) {
-        default_streams_table.append(templates.render("admin_default_streams_list", {stream: stream}));
-    });
-    loading.destroy_indicator($('#admin_page_default_streams_loading_indicator'));
-}
+exports.build_default_stream_table = function (streams_data) {
+    var self = {};
+
+    self.row_dict = new Dict();
+
+    function set_up_remove_click_hander(row, stream_name) {
+        row.on("click", ".remove-default-stream", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            channel.del({
+                url: '/json/default_streams'+ '?' + $.param({stream_name: stream_name}),
+                error: function (xhr) {
+                    var button = row.find("button");
+                    if (xhr.status.toString().charAt(0) === "4") {
+                        button.closest("td").html(
+                            $("<p>").addClass("text-error").text(JSON.parse(xhr.responseText).msg)
+                        );
+                    } else {
+                        button.text(i18n.t("Failed!"));
+                    }
+                },
+                success: function () {
+                    row.remove();
+                },
+            });
+        });
+    }
+
+    (function () {
+        var table = $("#admin_default_streams_table").expectOne();
+        _.each(streams_data, function (stream) {
+            var row = $(templates.render("admin_default_streams_list", {stream: stream}));
+            set_up_remove_click_hander(row, stream.name);
+            self.row_dict.set(stream.stream_id, row);
+            table.append(row);
+        });
+        loading.destroy_indicator($('#admin_page_default_streams_loading_indicator'));
+    }());
+
+    self.remove = function (stream_id) {
+        if (self.row_dict.has(stream_id)) {
+            var row = self.row_dict.get(stream_id);
+            row.remove();
+        }
+    };
+
+    return self;
+};
+var default_stream_table;
+
+exports.remove_default_stream = function (stream_id) {
+    if (default_stream_table) {
+        default_stream_table.remove(stream_id);
+    }
+};
 
 function get_non_default_streams_names(streams_data) {
     var non_default_streams_names = [];
@@ -136,13 +187,11 @@ function get_non_default_streams_names(streams_data) {
 }
 
 exports.update_default_streams_table = function () {
-    if (!meta.loaded) {
-        return;
-    }
-
-    if ($('#administration').hasClass('active')) {
+    if (/#*administration/.test(window.location.hash) ||
+        /#*settings/.test(window.location.hash)) {
         $("#admin_default_streams_table").expectOne().find("tr.default_stream_row").remove();
-        populate_default_streams(page_params.realm_default_streams);
+        default_stream_table = exports.build_default_stream_table(
+            page_params.realm_default_streams);
     }
 };
 
@@ -212,12 +261,15 @@ exports.populate_realm_aliases = function (aliases) {
         return;
     }
 
-    var domains_list = _.map(page_params.domains, function (ADomain) {
-        return ADomain.domain;
+    var domains_list = _.map(aliases, function (alias) {
+        return (alias.allow_subdomains ? "*." + alias.domain : alias.domain);
     });
     var domains = domains_list.join(', ');
+
+    $("#id_realm_restricted_to_domain").prop("checked", page_params.realm_restricted_to_domain);
     if (domains.length === 0) {
         domains = i18n.t("None");
+        $("#id_realm_restricted_to_domain").prop("disabled", true);
     }
     $("#realm_restricted_to_domains_label").text(i18n.t("New users restricted to the following domains: __domains__", {domains: domains}));
 
@@ -270,8 +322,9 @@ function _setup_page() {
         realm_default_language: page_params.realm_default_language,
         realm_waiting_period_threshold: page_params.realm_waiting_period_threshold,
     };
+
     var admin_tab = templates.render('admin_tab', options);
-    $("#administration").html(admin_tab);
+    $("#settings_content .administration-box").html(admin_tab);
     $("#administration-status").expectOne().hide();
     $("#admin-realm-name-status").expectOne().hide();
     $("#admin-realm-restricted-to-domain-status").expectOne().hide();
@@ -287,6 +340,20 @@ function _setup_page() {
     $('#admin-filter-status').expectOne().hide();
     $('#admin-filter-pattern-status').expectOne().hide();
     $('#admin-filter-format-status').expectOne().hide();
+
+    var tab = (function () {
+        var tab = false;
+        var hash_sequence = window.location.hash.split(/\//);
+        if (/#*(administration)/.test(hash_sequence[0])) {
+            tab = hash_sequence[1];
+            return tab || "organization-settings";
+        }
+        return tab;
+    }());
+
+    if (tab) {
+        exports.launch_page(tab);
+    }
 
     $("#id_realm_default_language").val(page_params.realm_default_language);
 
@@ -363,32 +430,6 @@ function _setup_page() {
 
         $("#deactivation_stream_modal .stream_name").text(stream_name);
         $("#deactivation_stream_modal").modal("show");
-    });
-
-    $(".admin_default_stream_table").on("click", ".remove-default-stream", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        $(".active_default_stream_row").removeClass("active_default_stream_row");
-        var row = $(e.target).closest(".default_stream_row");
-        row.addClass("active_default_stream_row");
-        var stream_name = row.find('.default_stream_name').text();
-
-        channel.del({
-            url: '/json/default_streams'+ '?' + $.param({stream_name: stream_name}),
-            error: function (xhr) {
-                if (xhr.status.toString().charAt(0) === "4") {
-                    $(".active_default_stream_row button").closest("td").html(
-                    $("<p>").addClass("text-error").text(JSON.parse(xhr.responseText).msg));
-                } else {
-                    $(".active_default_stream_row button").text("Failed!");
-                }
-            },
-            success: function () {
-                var row = $(".active_default_stream_row");
-                row.remove();
-            },
-        });
     });
 
     $('.create_default_stream').keypress(function (e) {
@@ -758,14 +799,20 @@ function _setup_page() {
     });
 
     $(".admin_user_table, .admin_bot_table").on("click", ".open-user-form", function (e) {
-        var email = $(e.currentTarget).data("email");
-        var user_info = get_user_info(email);
+        var user_id = $(e.currentTarget).attr("data-user-id");
+        var user_info = get_user_info(user_id);
         var user_row = user_info.user_row;
         var form_row = user_info.form_row;
         var reset_button = form_row.find(".reset_edit_user");
         var submit_button = form_row.find(".submit_name_changes");
         var full_name = form_row.find("input[name='full_name']");
         var admin_status = $('#administration-status').expectOne();
+
+        var person = people.get_person_from_user_id(user_id);
+
+        if (!person) {
+            return;
+        }
 
         // Show user form.
         user_row.hide();
@@ -780,7 +827,7 @@ function _setup_page() {
             e.preventDefault();
             e.stopPropagation();
 
-            var url = "/json/users/" + encodeURIComponent(email);
+            var url = "/json/users/" + encodeURIComponent(person.email);
             var data = {
                 full_name: JSON.stringify(full_name.val()),
             };
@@ -955,17 +1002,20 @@ function _setup_page() {
         });
     });
 
-    $("#add_alias").click(function () {
+    $("#submit-add-alias").click(function () {
         var aliases_info = $("#realm_aliases_modal").find(".aliases_info");
         var data = {
-            domain: JSON.stringify($("#new_alias").val()),
+            domain: JSON.stringify($("#add-alias-widget .new-alias-domain").val()),
+            allow_subdomains: JSON.stringify($("#add-alias-widget .new-alias-allow-subdomains").prop("checked")),
         };
 
         channel.post({
             url: "/json/realm/domains",
             data: data,
             success: function () {
-                $("#new_alias").val("");
+                $("#add-alias-widget .new-alias-domain").val("");
+                $("#add-alias-widget .new-alias-allow-subdomains").prop("checked", false);
+                $("#id_realm_restricted_to_domain").prop("disabled", false);
                 aliases_info.removeClass("text-error");
                 aliases_info.addClass("text-success");
                 aliases_info.text("Added successfully!");
@@ -978,7 +1028,50 @@ function _setup_page() {
         });
     });
 
+    $("#alias_table").on("change", ".allow-subdomains", function (e) {
+        e.stopPropagation();
+        var aliases_info = $("#realm_aliases_modal").find(".aliases_info");
+        var domain = $(this).parents("tr").find(".domain").text();
+        var allow_subdomains = $(this).prop('checked');
+        var url = '/json/realm/domains/' + domain;
+        var data = {
+            allow_subdomains: JSON.stringify(allow_subdomains),
+        };
+
+        channel.patch({
+            url: url,
+            data: data,
+            success: function () {
+                aliases_info.removeClass("text-error");
+                aliases_info.addClass("text-success");
+                if (allow_subdomains) {
+                    aliases_info.text(i18n.t("Update successful: Subdomains allowed for __domain__",
+                                             {domain: domain}));
+                } else {
+                    aliases_info.text(i18n.t("Update successful: Subdomains no longer allowed for __domain__",
+                                             {domain: domain}));
+                }
+            },
+            error: function (xhr) {
+                aliases_info.removeClass("text-success");
+                aliases_info.addClass("text-error");
+                aliases_info.text(JSON.parse(xhr.responseText).msg);
+            },
+        });
+    });
+
 }
+
+exports.launch_page = function (tab) {
+    var $active_tab = $("#settings_overlay_container li[data-section='" + tab + "']");
+
+    if ($active_tab.hasClass("admin")) {
+        $(".sidebar .ind-tab[data-name='admin']").click();
+    }
+
+    $("#settings_overlay_container").addClass("show");
+    $active_tab.click();
+};
 
 exports.setup_page = function () {
     i18n.ensure_i18n(_setup_page);

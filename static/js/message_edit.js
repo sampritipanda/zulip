@@ -244,7 +244,8 @@ function edit_message(row, raw_content) {
         // since otherwise there is a noticeable lag
         message_edit_countdown_timer.text(timer_text(seconds_left));
         var countdown_timer = setInterval(function () {
-            if (seconds_left - 1 <= 0) {
+            seconds_left -= 1;
+            if (seconds_left <= 0) {
                 clearInterval(countdown_timer);
                 message_edit_content.prop("readonly", "readonly");
                 if (message.type === 'stream') {
@@ -302,7 +303,7 @@ function start_edit_maintaining_scroll(row, content) {
     }
 }
 
-exports.start = function (row) {
+exports.start = function (row, edit_box_open_callback) {
     var message = current_msg_list.get(rows.id(row));
     var msg_list = current_msg_list;
     channel.get({
@@ -312,6 +313,9 @@ exports.start = function (row) {
             if (current_msg_list === msg_list) {
                 message.raw_content = data.raw_content;
                 start_edit_maintaining_scroll(row, data.raw_content);
+                if (edit_box_open_callback) {
+                    edit_box_open_callback();
+                }
             }
         },
     });
@@ -356,6 +360,65 @@ exports.maybe_show_edit = function (row, id) {
     if (currently_editing_messages[id] !== undefined) {
         current_msg_list.show_edit_message(row, currently_editing_messages[id]);
     }
+};
+
+exports.edit_last_sent_message = function () {
+    var msg = current_msg_list.get_last_own_editable_message();
+    if (msg !== undefined) {
+        var msg_row = current_msg_list.get_row(msg.id);
+        current_msg_list.select_id(rows.id(msg_row), {then_scroll: true, from_scroll: true});
+        message_edit.start(msg_row, function () {
+            var editability_type = message_edit.get_editability(msg, 5);
+            if (editability_type === message_edit.editability_types.TOPIC_ONLY) {
+                ui.focus_on('message_edit_topic');
+            } else {
+                ui.focus_on('message_edit_content');
+            }
+        });
+    }
+};
+
+exports.show_history = function (message) {
+    $('#message-history').html('');
+    $('#message-edit-history').modal("show");
+    channel.get({
+        url: "/json/messages/" + message.id + "/history",
+        data: {message_id: JSON.stringify(message.id)},
+        success: function (data) {
+            // For now, we ignore topic edits
+            var content_edit_history = [];
+            _.each(data.message_history, function (msg, index) {
+                if (index !== 0 && !msg.prev_content) {
+                    // Skip topic edits
+                    return;
+                }
+
+                // Format timestamp nicely for display
+                var item = {timestamp: timerender.get_full_time(msg.timestamp)};
+                if (index === 0) {
+                    item.posted_or_edited = "Posted by";
+                    item.body_to_render = msg.rendered_content;
+                } else {
+                    item.posted_or_edited = "Edited by";
+                    item.body_to_render = msg.content_html_diff;
+                }
+                if (msg.user_id) {
+                    var person = people.get_person_from_user_id(msg.user_id);
+                    item.edited_by = person.full_name;
+                }
+
+                content_edit_history.push(item);
+            });
+
+            $('#message-history').html(templates.render('message_edit_history', {
+                edited_messages: content_edit_history,
+            }));
+        },
+        error: function (xhr) {
+            ui.report_error(i18n.t("Error fetching message edit history"), xhr,
+                            $("#message-history-error"));
+        },
+    });
 };
 
 $(document).on('narrow_deactivated.zulip', function () {

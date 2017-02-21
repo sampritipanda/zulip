@@ -11,6 +11,7 @@ from django.test.client import (
     BOUNDARY, MULTIPART_CONTENT, encode_multipart,
 )
 from django.template import loader
+from django.test.testcases import SerializeMixin
 from django.http import HttpResponse
 from django.db.utils import IntegrityError
 from django.utils.translation import ugettext as _
@@ -63,6 +64,25 @@ from contextlib import contextmanager
 import six
 
 API_KEYS = {} # type: Dict[Text, Text]
+
+class UploadSerializeMixin(SerializeMixin):
+    """
+    We cannot use override_settings to change upload directory because
+    because settings.LOCAL_UPLOADS_DIR is used in url pattern and urls
+    are compiled only once. Otherwise using a different upload directory
+    for conflicting test cases would have provided better performance
+    while providing the required isolation.
+    """
+    lockfile = 'var/upload_lock'
+
+    @classmethod
+    def setUpClass(cls, *args, **kwargs):
+        # type: (*Any, **Any) -> None
+        if not os.path.exists(cls.lockfile):
+            with open(cls.lockfile, 'w'):
+                pass
+
+        super(UploadSerializeMixin, cls).setUpClass(*args, **kwargs)
 
 class ZulipTestCase(TestCase):
     '''
@@ -195,8 +215,8 @@ class ZulipTestCase(TestCase):
 
     def submit_reg_form_for_user(self, email, password, realm_name="Zulip Test",
                                  realm_subdomain="zuliptest", realm_org_type=Realm.COMMUNITY,
-                                 from_confirmation='', **kwargs):
-        # type: (Text, Text, Optional[Text], Optional[Text], int, Optional[Text], **Any) -> HttpResponse
+                                 from_confirmation='', full_name=None, **kwargs):
+        # type: (Text, Text, Optional[Text], Optional[Text], int, Optional[Text], Optional[Text], **Any) -> HttpResponse
         """
         Stage two of the two-step registration process.
 
@@ -205,8 +225,11 @@ class ZulipTestCase(TestCase):
 
         You can pass the HTTP_HOST variable for subdomains via kwargs.
         """
+        if full_name is None:
+            full_name = email.replace("@", "_")
         return self.client_post('/accounts/register/',
-                                {'full_name': email, 'password': password,
+                                {'full_name': full_name,
+                                 'password': password,
                                  'realm_name': realm_name,
                                  'realm_subdomain': realm_subdomain,
                                  'key': find_key_by_email(email),
@@ -289,7 +312,7 @@ class ZulipTestCase(TestCase):
         # type: (str, bytes) -> None
         response = self.client_get(url)
         data = b"".join(response.streaming_content)
-        self.assertEquals(result, data)
+        self.assertEqual(result, data)
 
     def assert_json_success(self, result):
         # type: (HttpResponse) -> Dict[str, Any]

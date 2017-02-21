@@ -39,6 +39,14 @@ global.current_msg_list = current_msg_list;
 var home_msg_list = {};
 global.home_msg_list = home_msg_list;
 
+var me = {
+    email: 'me@example.com',
+    user_id: 30,
+    full_name: 'Me Myself',
+};
+people.add(me);
+people.initialize_current_user(me.user_id);
+
 var zero_counts = {
     private_message_count: 0,
     home_unread_messages: 0,
@@ -165,7 +173,7 @@ var zero_counts = {
     assert.equal(counts.home_unread_messages, 1);
     assert.equal(unread.num_unread_for_stream('social'), 1);
 
-    muting.mute_topic('social', 'test_muting');
+    muting.add_muted_topic('social', 'test_muting');
     counts = unread.get_counts();
     assert.equal(counts.stream_count.get('social'), 0);
     assert.equal(counts.home_unread_messages, 0);
@@ -277,18 +285,21 @@ var zero_counts = {
     var counts = unread.get_counts();
     assert.equal(counts.private_message_count, 0);
 
-    var message = {
-        id: 15,
-        type: 'private',
-        reply_to: 'anybody@example.com',
-    };
-
     var anybody = {
         email: 'anybody@example.com',
         user_id: 999,
         full_name: 'Any Body',
     };
     people.add_in_realm(anybody);
+
+    var message = {
+        id: 15,
+        type: 'private',
+        display_recipient: [
+            {user_id: anybody.user_id},
+            {id: me.user_id},
+        ],
+    };
 
     unread.process_loaded_messages([message]);
 
@@ -321,7 +332,7 @@ var zero_counts = {
 
     var message = {
         id: 15,
-        reply_to: 'alice@example.com',
+        display_recipient: [{id: alice.user_id}],
         type: 'private',
     };
 
@@ -407,7 +418,7 @@ var zero_counts = {
     var message = {
         id: 9,
         type: 'private',
-        reply_to: 'unknown@zulip.com',
+        display_recipient: [{id: 9999}],
     };
 
     unread.process_read_message(message);
