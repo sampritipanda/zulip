@@ -276,9 +276,7 @@ $(function () {
         }
 
         if ($(e.target).is(".exit, .exit-sign, #draft_overlay, #draft_overlay > .flex")) {
-            $("#draft_overlay").fadeOut(500);
-
-            hashchange.exit_settings();
+            drafts.close();
         }
     });
 

@@ -1,5 +1,23 @@
 var common = require('../casper_lib/common.js').common;
 
+function waitWhileDraftsVisible(then) {
+  casper.waitFor(function () {
+      return casper.evaluate(function () {
+          return $("#draft_overlay").length === 0 ||
+                 $("#draft_overlay").css("opacity") === "0";
+      });
+  }, then);
+}
+
+function waitUntilDraftsVisible(then) {
+  casper.waitFor(function () {
+      return casper.evaluate(function () {
+          return $("#draft_overlay").length === 1 &&
+                 $("#draft_overlay").css("opacity") === "1";
+      });
+  }, then);
+}
+
 common.start_and_log_in();
 
 casper.then(function () {
@@ -11,8 +29,8 @@ casper.then(function () {
             casper.test.assertUrlMatch(
                 /^http:\/\/[^/]+\/#drafts/,
                 'URL suggests we are on drafts page');
-            casper.waitUntilVisible('#draft_overlay.new-style', function () {
-                casper.test.assertExists('#draft_overlay.new-style', 'Drafts page is active');
+            waitUntilDraftsVisible(function () {
+                casper.test.assertExists('#draft_overlay', 'Drafts page is active');
                 casper.test.assertSelectorHasText('.no-drafts', 'No Drafts.');
             });
         });
@@ -21,7 +39,7 @@ casper.then(function () {
 
 casper.then(function () {
     casper.click('#draft_overlay .exit');
-    casper.waitWhileVisible('#draft_overlay');
+    waitWhileDraftsVisible();
 });
 
 casper.then(function () {
@@ -59,7 +77,7 @@ casper.then(function () {
 });
 
 casper.then(function () {
-    casper.waitUntilVisible('#draft_overlay', function () {
+    waitUntilDraftsVisible(function () {
         casper.test.assertElementCount('.draft-row', 2, 'Drafts loaded');
 
         casper.test.assertSelectorHasText('.draft-row .message_header_stream .stream_label', 'all');
@@ -75,7 +93,7 @@ casper.then(function () {
 casper.then(function () {
     casper.test.info('Restoring Stream Message Draft');
     casper.click("#drafts_table .message_row:not(.private-message) .restore-draft");
-    casper.waitWhileVisible('#draft_overlay', function () {
+    waitWhileDraftsVisible(function () {
         casper.test.assertVisible('#stream-message', 'Stream Message Box Restored');
         common.check_form('form#send_message_form', {
           stream: 'all',
@@ -102,7 +120,7 @@ casper.then(function () {
 });
 
 casper.then(function () {
-    casper.waitUntilVisible('#draft_overlay', function () {
+    waitUntilDraftsVisible(function () {
         casper.test.assertSelectorHasText('.draft-row .message_header_stream .stream_label', 'all');
         casper.test.assertSelectorHasText('.draft-row .message_header_stream .stream_topic', 'tests');
         casper.test.assertTextExists('Updated Stream Message', 'Stream draft contains message content');
@@ -112,7 +130,7 @@ casper.then(function () {
 casper.then(function () {
     casper.test.info('Restoring Private Message Draft');
     casper.click("#drafts_table .message_row.private-message .restore-draft");
-    casper.waitWhileVisible('#draft_overlay', function () {
+    waitWhileDraftsVisible(function () {
         casper.test.assertVisible('#private-message', 'Private Message Box Restored');
         common.check_form('form#send_message_form', {
           recipient: 'cordelia@zulip.com, hamlet@zulip.com',
@@ -138,7 +156,7 @@ casper.then(function () {
 casper.then(function () {
     casper.test.info('Saving Draft by Reloading');
     casper.click('#draft_overlay .exit');
-    casper.waitWhileVisible('#draft_overlay', function () {
+    waitWhileDraftsVisible(function () {
         casper.click('body');
         casper.page.sendEvent('keypress', "C");
         casper.waitUntilVisible('#private-message', function () {
@@ -155,7 +173,7 @@ casper.then(function () {
     casper.waitUntilVisible('.drafts-link', function () {
         casper.click('.drafts-link');
     });
-    casper.waitUntilVisible('#draft_overlay', function () {
+    waitUntilDraftsVisible(function () {
         casper.test.assertElementCount('.draft-row', 2, 'Drafts loaded');
         casper.test.assertSelectorHasText('.draft-row .message_header_private_message .stream_label',
                                           'You and Cordelia Lear');
@@ -166,7 +184,7 @@ casper.then(function () {
 casper.then(function () {
     casper.test.info('Deleting Draft after Sending Message');
     casper.click("#drafts_table .message_row.private-message .restore-draft");
-    casper.waitWhileVisible('#draft_overlay', function () {
+    waitWhileDraftsVisible(function () {
         casper.test.assertVisible('#private-message');
         casper.click('#compose-send-button');
     });
@@ -177,7 +195,7 @@ casper.then(function () {
     casper.waitUntilVisible('.compose_table .drafts-link', function () {
         casper.click('.compose_table .drafts-link');
     });
-    casper.waitUntilVisible('#draft_overlay', function () {
+    waitUntilDraftsVisible(function () {
         casper.test.assertElementCount('.draft-row', 1, 'Drafts loaded');
         casper.test.assertDoesntExist("#drafts_table .message_row.private-message");
     });

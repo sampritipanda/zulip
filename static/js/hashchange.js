@@ -313,7 +313,6 @@ exports.initialize = function () {
 
 exports.close_modals = function () {
     $("[data-overlay]").removeClass("show");
-    $("#draft_overlay").fadeOut(500);
 };
 
 exports.exit_settings = function (callback) {

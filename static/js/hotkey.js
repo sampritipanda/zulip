@@ -211,8 +211,8 @@ function process_hotkey(e) {
         } else if ($("#subscription_overlay").hasClass("show")) {
             subs.close();
             return true;
-        } else if ($("#draft_overlay").is(":visible")) {
-            $("#draft_overlay").click();
+        } else if ($("#draft_overlay").hasClass("show")) {
+            drafts.close();
             return true;
         } else if ($('#markdown-help').hasClass('in') ||
             $('#keyboard-shortcuts').hasClass('in') ||

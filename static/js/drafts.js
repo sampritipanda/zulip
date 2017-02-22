@@ -105,16 +105,13 @@ exports.restore_draft = function (draft_id) {
                               draft_copy);
     }
 
-    $("#draft_overlay").fadeOut(300, function () {
-        hashchange.exit_settings();
-
-        compose_fade.clear_compose();
-        if (draft.type === "stream" && draft.stream === "") {
-            draft_copy.subject = "";
-        }
-        compose.start(draft_copy.type, draft_copy);
-        $("#new_message_content").data("draft-id", draft_id);
-    });
+    exports.close();
+    compose_fade.clear_compose();
+    if (draft.type === "stream" && draft.stream === "") {
+      draft_copy.subject = "";
+    }
+    compose.start(draft_copy.type, draft_copy);
+    $("#new_message_content").data("draft-id", draft_id);
 };
 
 exports.setup_page = function (callback) {
@@ -125,10 +122,11 @@ exports.setup_page = function (callback) {
 
         $("#new_message_content").focusout(exports.update_draft);
 
-        $(".draft_controls .restore-draft").on("click", function () {
+        $(".draft_controls .restore-draft").on("click", function (e) {
+            e.stopPropagation();
+
             var draft_row = $(this).closest(".draft-row");
             var draft_id = draft_row.data("draft-id");
-
             exports.restore_draft(draft_id);
         });
 
@@ -212,8 +210,13 @@ exports.setup_page = function (callback) {
 
 exports.launch = function () {
     exports.setup_page(function () {
-        $("#draft_overlay").fadeIn(300);
+        $("#draft_overlay").addClass("show");
     });
+};
+
+exports.close = function () {
+    hashchange.exit_settings();
+    $("#draft_overlay").removeClass("show");
 };
 
 return exports;
