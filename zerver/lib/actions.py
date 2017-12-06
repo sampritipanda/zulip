@@ -3867,7 +3867,7 @@ def do_send_confirmation_email(invitee: PreregistrationUser,
     `referrer` is a UserProfile.
     """
     activation_url = create_confirmation_link(invitee, referrer.realm.host, Confirmation.INVITATION)
-    context = {'referrer': referrer, 'custom_body': body, 'activate_url': activation_url,
+    context = {'referrer': referrer, 'activate_url': activation_url,
                'referrer_realm_name': referrer.realm.name}
     from_name = u"%s (via Zulip)" % (referrer.full_name,)
     send_email('zerver/emails/invitation', to_email=invitee.email, from_name=from_name,
