@@ -202,7 +202,8 @@ def add_a(
         desc: Optional[str]=None,
         class_attr: str="message_inline_image",
         data_id: Optional[str]=None,
-        insertion_index: Optional[int]=None
+        insertion_index: Optional[int]=None,
+        use_thumbnails: Optional[bool]=True
 ) -> None:
     title = title if title is not None else url_filename(link)
     title = title if title else ""
@@ -222,7 +223,23 @@ def add_a(
     if data_id is not None:
         a.set("data-id", data_id)
     img = markdown.util.etree.SubElement(a, "img")
-    img.set("src", url)
+    if settings.THUMBOR_HOST != '' and use_thumbnails:
+        thumbnail_path = '/thumbnail'
+        if not url.startswith('/'):
+            thumbnail_path += '/'
+        img.set("src", "{0}{1}?size=thumbnail".format(
+            thumbnail_path,
+            urllib.parse.quote(url)
+        ))
+        img.set('data-original', "{0}{1}?size=original".format(
+            thumbnail_path,
+            urllib.parse.quote(url)
+        ))
+    else:
+        # TODO: We might want to rename use_thumbnails to
+        # !already_thumbnailed for clarity.
+        img.set("src", url)
+
     if class_attr == "message_inline_ref":
         summary_div = markdown.util.etree.SubElement(div, "div")
         title_div = markdown.util.etree.SubElement(summary_div, "div")
@@ -834,7 +851,8 @@ class InlineInterestingLinkProcessor(markdown.treeprocessors.Treeprocessor):
                 add_a(root, dropbox_image['image'], url,
                       title=dropbox_image.get('title', ""),
                       desc=dropbox_image.get('desc', ""),
-                      class_attr=class_attr)
+                      class_attr=class_attr,
+                      use_thumbnails=False)
                 continue
             if self.is_image(url):
                 self.handle_image_inlining(root, found_url)
@@ -855,7 +873,9 @@ class InlineInterestingLinkProcessor(markdown.treeprocessors.Treeprocessor):
             youtube = self.youtube_image(url)
             if youtube is not None:
                 yt_id = self.youtube_id(url)
-                add_a(root, youtube, url, None, None, "youtube-video message_inline_image", yt_id)
+                add_a(root, youtube, url, None, None,
+                      "youtube-video message_inline_image",
+                      yt_id, use_thumbnails=False)
                 continue
 
             if arguments.db_data and arguments.db_data['sent_by_bot']:
@@ -876,7 +896,8 @@ class InlineInterestingLinkProcessor(markdown.treeprocessors.Treeprocessor):
                     vimeo_title = self.vimeo_title(extracted_data)
                     if vimeo_image is not None:
                         add_a(root, vimeo_image, url, vimeo_title,
-                              None, "vimeo-video message_inline_image", vm_id)
+                              None, "vimeo-video message_inline_image", vm_id,
+                              use_thumbnails=False)
                     if vimeo_title is not None:
                         found_url.family.child.text = vimeo_title
                 else:

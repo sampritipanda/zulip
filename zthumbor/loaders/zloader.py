@@ -2,12 +2,12 @@ from __future__ import absolute_import
 
 from six.moves import urllib
 from tornado.concurrent import return_future
-from thumbor.loaders import LoaderResult, file_loader, http_loader
+from thumbor.loaders import LoaderResult, file_loader, https_loader
 from tc_aws.loaders import s3_loader
 from thumbor.context import Context
 from .helpers import (
-    get_url_params, sign_is_valid, THUMBOR_S3_TYPE, THUMBOR_LOCAL_FILE_TYPE,
-    THUMBOR_EXTERNAL_TYPE
+    separate_url_and_source_type, change_url_scheme_to_http,
+    THUMBOR_S3_TYPE, THUMBOR_LOCAL_FILE_TYPE, THUMBOR_EXTERNAL_TYPE
 )
 
 from typing import Any, Callable
@@ -23,22 +23,26 @@ def get_not_found_result():
 def load(context, url, callback):
     # type: (Context, str, Callable[..., Any]) -> None
     url = urllib.parse.unquote(url)
-    url_params = get_url_params(url)
-    source_type = url_params.get('source_type')
-
-    if not sign_is_valid(url, context) or source_type not in (
-            THUMBOR_S3_TYPE, THUMBOR_LOCAL_FILE_TYPE, THUMBOR_EXTERNAL_TYPE):
+    source_type, actual_url = separate_url_and_source_type(url)
+    if source_type not in (THUMBOR_S3_TYPE, THUMBOR_LOCAL_FILE_TYPE,
+                           THUMBOR_EXTERNAL_TYPE):
         callback(get_not_found_result())
         return
 
-    url = url.rsplit('?', 1)[0]
+    def maybe_perform_pre_callback_actions(result):
+        # type: (LoaderResult) -> None
+        if result.successful:
+            callback(result)
+        elif source_type == THUMBOR_EXTERNAL_TYPE:
+            http_url = change_url_scheme_to_http(actual_url)
+            https_loader.load(context, http_url, callback)
+        else:
+            callback(result)
+
     if source_type == THUMBOR_S3_TYPE:
-        s3_loader.load(context, url, callback)
+        s3_loader.load(context, actual_url, callback)
     elif source_type == THUMBOR_LOCAL_FILE_TYPE:
-        file_loader.load(context, url, callback)
+        patched_local_url = 'files/' + actual_url
+        file_loader.load(context, patched_local_url, callback)
     elif source_type == THUMBOR_EXTERNAL_TYPE:
-        http_loader.load_sync(
-            context,
-            url,
-            callback,
-            normalize_url_func=http_loader._normalize_url)
+        https_loader.load(context, actual_url, maybe_perform_pre_callback_actions)
