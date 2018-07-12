@@ -155,4 +155,4 @@ PUSH_NOTIFICATION_BOUNCER_URL = None
 # Disable messages from slow queries as they affect backend tests.
 SLOW_QUERY_MESSAGES_ENABLED = False
 
-THUMBOR_HOST = '127.0.0.1:9995'
+THUMBOR_URL = 'http://127.0.0.1:9995'

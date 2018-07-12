@@ -14,7 +14,7 @@ from zthumbor.loaders.helpers import (
 from zerver.lib.camo import get_camo_url
 
 def is_thumbor_enabled() -> bool:
-    return settings.THUMBOR_HOST != ''
+    return settings.THUMBOR_URL != ''
 
 def get_source_type(url: str) -> str:
     if not url.startswith('/user_uploads/'):
@@ -63,11 +63,10 @@ def generate_thumbnail_url(path: str, size: str='0x0') -> str:
         image_url=image_url
     )
 
-    if settings.THUMBOR_HOST == '127.0.0.1:9995':
+    if settings.THUMBOR_URL == 'http://127.0.0.1:9995':
         # If THUMBOR_HOST is the default of the local machine, we can
         # just serve a relative URL.
         thumbnail_url = '/thumbor' + encrypted_url
     else:
-        # THUMBFIXME: Change how THUMBOR_HOST works.
-        thumbnail_url = urllib.parse.urljoin(settings.THUMBOR_HOST, thumbnail_url)
+        thumbnail_url = urllib.parse.urljoin(settings.THUMBOR_URL, encrypted_url)
     return thumbnail_url
