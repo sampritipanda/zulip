@@ -27,17 +27,22 @@ def load(context, url, callback):
     if source_type not in (THUMBOR_S3_TYPE, THUMBOR_LOCAL_FILE_TYPE,
                            THUMBOR_EXTERNAL_TYPE):
         callback(get_not_found_result())
+        # TODO: logging.warning() for this case, just because it
+        # probably reflects a bug..
         return
 
     def maybe_perform_pre_callback_actions(result):
         # type: (LoaderResult) -> None
         if result.successful:
             callback(result)
-        elif source_type == THUMBOR_EXTERNAL_TYPE:
-            http_url = change_url_scheme_to_http(actual_url)
-            https_loader.load(context, http_url, callback)
-        else:
-            callback(result)
+            return
+
+        # TODO: Do we need this logic?
+        if actual_url.startswith("https://") or actual_url.startswith("http://"):
+            return
+
+        http_url = change_url_scheme_to_http(actual_url)
+        https_loader.load(context, http_url, callback)
 
     if source_type == THUMBOR_S3_TYPE:
         s3_loader.load(context, actual_url, callback)
