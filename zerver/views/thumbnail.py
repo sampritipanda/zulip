@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.conf import settings
 from typing import Optional
 from zerver.models import UserProfile, validate_attachment_request
-from zerver.lib.request import has_request_variables
+from zerver.lib.request import has_request_variables, REQ
 from zerver.lib.thumbnail import generate_thumbnail_url
 import urllib
 
@@ -21,21 +21,19 @@ def validate_thumbnail_request(user_profile: UserProfile, path: str) -> Optional
 
 @has_request_variables
 def backend_serve_thumbnail(request: HttpRequest, user_profile: UserProfile,
-                            url: str) -> HttpResponse:
+                            url: str, size_requested=REQ("size")) -> HttpResponse:
     url = urllib.parse.unquote(url)
-    if validate_thumbnail_request(user_profile, url):
-        size_requested = request.GET.get('size')
+    if not validate_thumbnail_request(user_profile, url):
+        return HttpResponseForbidden(_("<p>You are not authorized to view this file.</p>"))
 
-        size = None
-        if size_requested == 'thumbnail':
-            size = '0x100'
-        elif size_requested == 'original':
-            size = '0x0'
+    size = None
+    if size_requested == 'thumbnail':
+        size = '0x100'
+    elif size_requested == 'original':
+        size = '0x0'
 
-        if size is None:
-            return HttpResponseForbidden(_("<p>Invalid size.</p>"))
+    if size is None:
+        return HttpResponseForbidden(_("<p>Invalid size.</p>"))
 
-        thumbnail_url = generate_thumbnail_url(url, size)
-        return redirect(thumbnail_url)
-
-    return HttpResponseForbidden(_("<p>You are not authorized to view this file.</p>"))
+    thumbnail_url = generate_thumbnail_url(url, size)
+    return redirect(thumbnail_url)
